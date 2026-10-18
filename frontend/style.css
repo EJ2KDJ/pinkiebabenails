@@ -3,7 +3,7 @@
     --secondary-color: #fcf8f6;
     --text-color: #4a4a4a;
     --accent-color: #9e6d7d;
-    --font-family: 'Cormorant Garamond', serif;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
@@ -134,6 +134,7 @@ footer {
 
     #logo {
         display: flex;
+        height: 80px;
     }
 
     .navLinks {

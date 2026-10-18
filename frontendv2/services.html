@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff4f6" />
+    <title>Services &amp; Pricing | PinkieBabe Nails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <script src="js/slideshow.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
+            <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
+        </a>
+        <input class="nav-toggle" type="checkbox" id="nav-toggle" />
+        <label class="nav-toggle-button" for="nav-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span class="visually-hidden">Toggle navigation</span>
+        </label>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About Us</a>
+            <a href="services.html" aria-current="page">Services &amp; Pricing</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+    </header>
+    <section class="page-header">
+        <a class="eyebrow" href="index.html">PinkieBabe Nails</a>
+        <h1>Services &amp; Nail Gallery</h1>
+        <p>Home-service treatments and a look at some of our recent nail designs.</p>
+    </section>
+
+    <main class="content-section">
+        <article class="feature-card service-summary">
+            <h2>Nail Care</h2>
+            <p>Manicure and pedicure services with quality polish and relaxing, attentive care. Contact us to discuss a service and availability.</p>
+        </article>
+        <div class="gallery-carousel" role="region" aria-roledescription="carousel" aria-label="Nail design gallery">
+            <div class="gallery" aria-live="polite">
+                <figure class="gallery-slide is-active" role="group" aria-roledescription="slide" aria-label="1 of 4">
+                    <img src="assets/nails1.jpg" alt="Red and black nail art" />
+                    <figcaption>Red and black nail art</figcaption>
+                </figure>
+                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="2 of 4" aria-hidden="true">
+                    <img src="assets/nails2.jpg" alt="Red and pink marbled nail art" />
+                    <figcaption>Red and pink marbled nail art</figcaption>
+                </figure>
+                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="3 of 4" aria-hidden="true">
+                    <img src="assets/nails3.jpg" alt="Blue chrome nail art" />
+                    <figcaption>Blue chrome nail art</figcaption>
+                </figure>
+                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="4 of 4" aria-hidden="true">
+                    <img src="assets/nails4.jpg" alt="Colorful chrome nail art" />
+                    <figcaption>Colorful chrome nail art</figcaption>
+                </figure>
+            </div>
+            <button class="gallery-control gallery-control-previous" type="button" aria-label="Previous nail design">&#8249;</button>
+            <button class="gallery-control gallery-control-next" type="button" aria-label="Next nail design">&#8250;</button>
+            <div class="gallery-pagination" aria-label="Choose a nail design">
+                <button class="gallery-dot" type="button" aria-label="Show nail design 1" aria-current="true"></button>
+                <button class="gallery-dot" type="button" aria-label="Show nail design 2" aria-current="false"></button>
+                <button class="gallery-dot" type="button" aria-label="Show nail design 3" aria-current="false"></button>
+                <button class="gallery-dot" type="button" aria-label="Show nail design 4" aria-current="false"></button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
+    </footer>
+</body>
+</html>
