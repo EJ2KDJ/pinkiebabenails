@@ -525,7 +525,8 @@ a:focus-visible {
 
 .booking-guide,
 .policy-section,
-.contact-location {
+.contact-location,
+.inquiry-section {
   margin-bottom: 1.5rem;
   padding: clamp(1.25rem, 4vw, 2rem);
   border: 1px solid var(--line);
@@ -691,6 +692,100 @@ a:focus-visible {
   text-align: center;
 }
 
+.inquiry-section .section-heading h2 {
+  color: var(--cherry);
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+}
+
+.inquiry-form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+fieldset.form-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-field label,
+.form-field legend {
+  color: var(--cherry-deep);
+  font-weight: 600;
+}
+
+.form-field input:not([type="radio"]),
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+}
+
+.form-field input:focus-visible,
+.form-field select:focus-visible,
+.form-field textarea:focus-visible {
+  outline: 2px solid var(--cherry-bright);
+  outline-offset: 1px;
+}
+
+.form-field textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.radio-options {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.radio-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.form-status {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.form-status:empty {
+  display: none;
+}
+
+.form-status-success {
+  color: #256b3d;
+}
+
+.form-status-error {
+  color: #a3182f;
+}
+
+.inquiry-form .button {
+  justify-self: start;
+  cursor: pointer;
+}
+
+
 @media (max-width: 640px) {
   .site-header {
     justify-content: space-between;
@@ -779,6 +874,10 @@ a:focus-visible {
   }
 
   .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
     grid-template-columns: 1fr;
   }
 

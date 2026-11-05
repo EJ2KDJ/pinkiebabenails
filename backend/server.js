@@ -9,6 +9,7 @@ const path = require('path');
 const db = require('./src/models');
 
 const app = express();
+app.set('trust proxy', 1); // trust first proxy (for rate limiting behind a reverse proxy)
 
 app.use(helmet());
 app.use(cors());
@@ -17,6 +18,8 @@ app.use(express.json());
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
+
+app.use('/api/inquiries', require('./src/routes/inquiries'));
 
 // Export for Vercel and other hosting platforms.
 module.exports = app;
