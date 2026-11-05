@@ -9,6 +9,7 @@ const path = require('path');
 const db = require('./src/models');
 
 const app = express();
+app.set('trust proxy', 1); // trust first proxy (for rate limiting behind a reverse proxy)
 
 app.use(helmet());
 app.use(cors());

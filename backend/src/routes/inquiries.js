@@ -14,6 +14,14 @@ const SERVICES = [
     'Other',
 ];
 
+const inquiryLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // limit each IP to 5 requests per windowMs
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    message: { errors: ['Too many inquiries from this IP, please try again later.'] },
+});
+
 const validateInquiry = [
     body('name').trim().notEmpty().withMessage('Please enter your name.').isLength({ max: 100 }),
     body('email').trim().isEmail().withMessage('Please enter a valid email address.').normalizeEmail(),
