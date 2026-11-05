@@ -18,6 +18,8 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+app.use('/api/inquiries', require('./src/routes/inquiries'));
+
 // Export for Vercel and other hosting platforms.
 module.exports = app;
 
