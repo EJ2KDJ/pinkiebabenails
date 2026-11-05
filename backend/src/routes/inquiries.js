@@ -77,7 +77,7 @@ async function sendOwnerEmail(inquiry) {
     });
 }
 
-router.post('/', validateInquiry, async (req, res) => {
+router.post('/', inquiryLimiter, validateInquiry, async (req, res) => {
     // Hidden "website" field: real visitors leave it empty, bots tend to fill it in.
     if (req.body.website) {
         return res.status(201).json({ message: 'Inquiry received.' });
