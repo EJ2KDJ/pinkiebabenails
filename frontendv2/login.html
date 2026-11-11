@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#fff4f6" />
     <meta name="robots" content="noindex" />
-    <title>Log in | PinkieBabe Nails</title>
+    <title>Account | PinkieBabe Nails</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
@@ -38,23 +38,47 @@
 
     <section class="page-header">
         <p class="eyebrow">PinkieBabe Nails</p>
-        <h1>Log in</h1>
-        <p>Owners and customers sign in here.</p>
+        <h1 id="auth-title">Welcome back</h1>
+        <p id="auth-description">Log in or create an account to get started.</p>
     </section>
 
     <main class="content-section auth-content">
         <section class="auth-card">
             <form id="login-form" class="inquiry-form" novalidate>
+                <div class="auth-modes" id="auth-modes" role="group" aria-label="Choose an account action">
+                    <button class="auth-mode is-active" type="button" data-auth-mode="login" aria-pressed="true">Log in</button>
+                    <button class="auth-mode" type="button" data-auth-mode="signup" aria-pressed="false">Sign up</button>
+                </div>
+                <div class="form-field" id="name-field" hidden>
+                    <label for="name">Name</label>
+                    <input id="name" name="name" type="text" autocomplete="name" maxlength="100" />
+                </div>
                 <div class="form-field">
                     <label for="email">Email</label>
                     <input id="email" name="email" type="email" autocomplete="username" required />
                 </div>
-                <div class="form-field">
-                    <label for="password">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="current-password" required />
+                <div class="form-field" id="phone-field" hidden>
+                    <label for="phone-number">Phone number</label>
+                    <input id="phone-number" name="phoneNumber" type="tel" autocomplete="tel" />
                 </div>
+                <div class="form-field" id="password-field">
+                    <label for="password">Password</label>
+                    <div class="password-input">
+                        <input id="password" name="password" type="password" autocomplete="current-password" maxlength="72" required />
+                        <button class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button class="auth-forgot-link" id="forgot-password-link" type="button">Forgot password?</button>
+                <p class="auth-note" id="auth-note" hidden></p>
                 <p class="form-status" id="login-status" role="status" aria-live="polite"></p>
-                <button class="button" type="submit">Log in</button>
+                <button class="button" id="auth-submit" type="submit">Log in</button>
+                <button class="auth-back-link" id="auth-back" type="button" hidden>Back to log in</button>
+                <a class="auth-back-link" href="admin-login.html">Owner sign in</a>
             </form>
         </section>
     </main>

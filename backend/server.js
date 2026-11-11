@@ -23,6 +23,8 @@ app.get('/api/health', (req, res) => {
 
 // Keep inquiry handling in its own router, separate from server setup.
 app.use('/api/inquiries', require('./src/routes/inquiries'));
+app.use('/api/auth', require('./src/routes/auth'));
+app.use('/api/admin', require('./src/routes/admin'));
 
 // Export for Vercel and other hosting platforms.
 module.exports = app;

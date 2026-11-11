@@ -138,3 +138,22 @@ Kung may error or hindi niyo alam gagawin:
 
 **STOP muna and send sa group chat.**
 Huwag manghula.
+
+## Account authentication setup
+
+The backend account endpoints need a database, a JWT secret, and SMTP settings for password recovery. Add these values to the backend environment (or the hosting provider's environment settings):
+
+- `DATABASE_URL` — PostgreSQL connection URL.
+- `JWT_SECRET` — a long, random secret; do not use a sample or commit it.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` — SMTP account used to send password reset links.
+- `FRONTEND_URL` — public website origin, used to create password reset links. Required in production.
+
+From the `backend` directory, run `npm run migrate` to create or update the account tables before starting the API with `npm start`. Run migrations against the same production database before deploying backend code that expects a schema change. Password reset links expire after one hour. Public signups are customer accounts; admin accounts must be provisioned separately.
+
+### Owner dashboard access
+
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the backend `.env` file or hosting environment. Use a unique password of at least 8 characters; it is hashed before being stored in the database. Optionally set `ADMIN_NAME` and `ADMIN_PHONE_NUMBER`.
+
+After migrations are complete, run `npm run provision-admin` from the `backend` directory against the same database used by the app. This creates or updates the owner account and sets its role to `admin`; rerunning it resets that account's password to the current `ADMIN_PASSWORD`. Do not commit `.env` or share its contents.
+
+The owner signs in at `/admin-login.html`. This page uses a dedicated admin-only login endpoint; customer accounts cannot use it, and owner accounts cannot sign in through the public customer login. Share the page link, but never put credentials in the link itself.

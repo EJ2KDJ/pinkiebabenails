@@ -821,6 +821,113 @@ fieldset.form-field {
   box-shadow: var(--shadow);
 }
 
+.auth-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--rose-surface);
+}
+
+.auth-mode {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cherry-deep);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.auth-mode.is-active {
+  background: var(--cherry-bright);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(126, 38, 69, 0.16);
+}
+
+.auth-mode:focus-visible,
+.password-toggle:focus-visible,
+.auth-back-link:focus-visible {
+  outline: 3px solid var(--cherry-bright);
+  outline-offset: 3px;
+}
+
+.password-input {
+  position: relative;
+}
+
+.password-input input {
+  padding-right: 3.25rem !important;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0.55rem;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cherry);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  background: var(--rose-surface);
+}
+
+.password-toggle svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.auth-forgot-link,
+.auth-back-link {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cherry-deep);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.auth-forgot-link {
+  margin-top: -0.55rem;
+}
+
+.auth-note {
+  margin: 0;
+  color: #76515f;
+  font-size: 0.98rem;
+}
+
+.auth-card .inquiry-form .button {
+  width: 100%;
+}
+
+.auth-card .inquiry-form .button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 /* ---------- Owner dashboard ---------- */
 
 .admin-header {
