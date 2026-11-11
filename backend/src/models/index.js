@@ -9,13 +9,15 @@ const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.js')[env];
 const db = {};
 
+// Connect using the configured URL, with a credential-based fallback for local setups.
 let sequelize;
-if (config.use_env_variable) {
+if (config.use_env_variable) { //
   sequelize = new Sequelize(process.env[config.use_env_variable], config);
 } else {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
+// Load model definitions from this directory so new models are registered automatically.
 fs
   .readdirSync(__dirname)
   .filter(file => {
@@ -31,6 +33,7 @@ fs
     db[model.name] = model;
   });
 
+// Set up declared model relationships after all models have been loaded.
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
     db[modelName].associate(db);

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff4f6" />
+    <meta name="robots" content="noindex" />
+    <title>Log in | PinkieBabe Nails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/login.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
+            <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
+        </a>
+        <input class="nav-toggle" type="checkbox" id="nav-toggle" />
+        <label class="nav-toggle-button" for="nav-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span class="visually-hidden">Toggle navigation</span>
+        </label>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About Us</a>
+            <a href="services.html">Services &amp; Pricing</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <section class="page-header">
+        <p class="eyebrow">PinkieBabe Nails</p>
+        <h1>Log in</h1>
+        <p>Owners and customers sign in here.</p>
+    </section>
+
+    <main class="content-section auth-content">
+        <section class="auth-card">
+            <form id="login-form" class="inquiry-form" novalidate>
+                <div class="form-field">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" autocomplete="username" required />
+                </div>
+                <div class="form-field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required />
+                </div>
+                <p class="form-status" id="login-status" role="status" aria-live="polite"></p>
+                <button class="button" type="submit">Log in</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
+    </footer>
+</body>
+
+</html>

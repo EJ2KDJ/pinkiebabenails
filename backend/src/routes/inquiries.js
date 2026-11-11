@@ -15,6 +15,7 @@ const SERVICES = [
     'Other',
 ];
 
+// Limit repeated submissions from one IP to reduce spam and accidental retries.
 const inquiryLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 5, // limit each IP to 5 requests per windowMs
@@ -23,6 +24,7 @@ const inquiryLimiter = rateLimit({
     message: { errors: ['Too many inquiries from this IP, please try again later.'] },
 });
 
+// Validate and normalize all client-supplied values before writing to the database.
 const validateInquiry = [
     body('name').trim().notEmpty().withMessage('Please enter your name.').isLength({ max: 100 }),
     body('email').trim().isEmail().withMessage('Please enter a valid email address.').normalizeEmail(),
@@ -41,6 +43,7 @@ const validateInquiry = [
     body('gelProductRemovalNeeded').isBoolean().withMessage('Please choose Yes or No.').toBoolean(),
 ];
 
+// Notify the owner while preserving the original inquiry as the reply-to address.
 async function sendOwnerEmail(inquiry) {
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, OWNER_EMAIL } = process.env;
     if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !OWNER_EMAIL) {
@@ -60,6 +63,7 @@ async function sendOwnerEmail(inquiry) {
         timeStyle: 'short',
     });
 
+    // Format the requested time in the salon's local timezone for the owner.
     await transporter.sendMail({
         from: SMTP_USER,
         to: OWNER_EMAIL,
@@ -77,18 +81,20 @@ async function sendOwnerEmail(inquiry) {
     });
 }
 
-router.post('/', validateInquiry, async (req, res) => {
-    // Hidden "website" field: real visitors leave it empty, bots tend to fill it in.
+router.post('/', inquiryLimiter, validateInquiry, async (req, res) => {
+    // Silently accept honeypot submissions without storing or emailing them.
     if (req.body.website) {
         return res.status(201).json({ message: 'Inquiry received.' });
     }
 
+    // Return validation errors before attempting any database writes.
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array().map((e) => e.msg) });
     }
 
     try {
+        // Persist first so mail delivery problems cannot discard a valid inquiry.
         const inquiry = await db.Inquiry.create({
             name: req.body.name,
             email: req.body.email,

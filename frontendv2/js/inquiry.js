@@ -3,7 +3,7 @@ const statusMessage = document.getElementById('form-status');
 const submitButton = form.querySelector('button[type="submit"]');
 const dateTimeInput = form.elements.preferredDateTime;
 
-// Do not let people pick a time that has already passed.
+// Keep the browser's local datetime-local value aligned with the current local time.
 function setMinimumDateTime() {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -16,6 +16,7 @@ function showStatus(message, type) {
     statusMessage.className = 'form-status form-status-' + type;
 }
 
+// Convert the form's local date/time into an ISO timestamp before sending it to the API.
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
     showStatus('', '');
@@ -37,6 +38,7 @@ form.addEventListener('submit', async (event) => {
     };
 
     try {
+        // The API validates and stores the inquiry; the response controls the user-facing status.
         const response = await fetch('/api/inquiries', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

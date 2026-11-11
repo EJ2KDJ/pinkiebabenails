@@ -9,16 +9,19 @@ const path = require('path');
 const db = require('./src/models');
 
 const app = express();
-app.set('trust proxy', 1); // trust first proxy (for rate limiting behind a reverse proxy)
+// Use the hosting proxy's client IP so rate limits work correctly in production.
+app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Lightweight endpoint for deployment health checks.
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+// Keep inquiry handling in its own router, separate from server setup.
 app.use('/api/inquiries', require('./src/routes/inquiries'));
 
 // Export for Vercel and other hosting platforms.
@@ -26,10 +29,12 @@ module.exports = app;
 
 // Start a local server during development.
 if (require.main === module) {
+    // Serve the static site only for local development; production imports this app.
     app.use(express.static(path.resolve(__dirname, '..', 'frontendv2')));
 
     const PORT = process.env.PORT || 3000;
 
+    // Start listening only after Sequelize confirms the database is reachable.
     db.sequelize
         .authenticate()
         .then(() => {

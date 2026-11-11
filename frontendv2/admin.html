@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff4f6" />
+    <meta name="robots" content="noindex" />
+    <title>Owner dashboard | PinkieBabe Nails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/admin.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header admin-header">
+        <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
+            <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
+        </a>
+        <p class="admin-title">Owner dashboard</p>
+        <button class="button admin-logout" id="logout-button" type="button">Log out</button>
+    </header>
+
+    <main class="admin-main" hidden id="dashboard">
+        <section aria-labelledby="inquiries-heading">
+            <div class="admin-toolbar">
+                <div>
+                    <p class="eyebrow">Messages from the website</p>
+                    <h1 id="inquiries-heading">Inquiries</h1>
+                </div>
+                <button class="button button-outline admin-refresh" id="refresh-button" type="button">Refresh</button>
+            </div>
+
+            <div class="filter-bar" id="filter-bar" role="group" aria-label="Filter inquiries by status"></div>
+            <p class="form-status" id="dashboard-status" role="status" aria-live="polite"></p>
+            <div class="inquiry-list" id="inquiry-list"></div>
+        </section>
+    </main>
+
+    <p class="admin-loading" id="loading">Loading...</p>
+
+    <footer class="site-footer">
+        <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
+    </footer>
+</body>
+
+</html>
