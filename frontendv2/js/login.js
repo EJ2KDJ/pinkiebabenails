@@ -89,7 +89,7 @@ function goToHome(user) {
 async function skipIfLoggedIn() {
     if (mode === 'reset') return;
     try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/auth/me', { headers: window.authSessionHeaders() });
         if (response.ok) {
             const result = await response.json();
             goToHome(result.user);
@@ -142,7 +142,7 @@ form.addEventListener('submit', async (event) => {
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...window.authSessionHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         });
         const result = await response.json().catch(() => ({}));

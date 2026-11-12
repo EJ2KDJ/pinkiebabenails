@@ -59,4 +59,27 @@ router.patch(
     }
 );
 
+router.delete(
+    '/inquiries/:id',
+    param('id').isInt({ min: 1 }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: ['Invalid request.'] });
+        }
+
+        try {
+            const inquiry = await db.Inquiry.findByPk(req.params.id);
+            if (!inquiry) {
+                return res.status(404).json({ errors: ['Inquiry not found.'] });
+            }
+            await inquiry.destroy();
+            return res.json({ message: 'Inquiry deleted.' });
+        } catch (error) {
+            console.error('Deleting inquiry failed:', error.message);
+            return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
+        }
+    }
+);
+
 module.exports = router;

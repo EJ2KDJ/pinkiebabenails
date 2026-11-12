@@ -11,7 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/auth-session.js"></script>
     <script src="js/inquiry.js" defer></script>
+    <script src="js/auth-nav.js" defer></script>
 </head>
 
 <body>
@@ -63,7 +66,7 @@
                     <label for="email">Email</label>
                     <input id="email" name="email" type="email" autocomplete="email" required />
                 </div>
-                <div class="form-row">
+                <div class="form-row inquiry-appointment-row">
                     <div class="form-field">
                         <label for="service">Service</label>
                         <select id="service" name="service" required>
@@ -76,8 +79,14 @@
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="preferredDateTime">Preferred date and time</label>
-                        <input id="preferredDateTime" name="preferredDateTime" type="datetime-local" required />
+                        <label for="preferredDate">Preferred date</label>
+                        <input id="preferredDate" type="date" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="preferredHour">Preferred hour</label>
+                        <select id="preferredHour" required>
+                            <option value="" selected disabled>Choose an hour</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-field">

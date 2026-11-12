@@ -3,7 +3,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
-const { body, validationResult } = require('express-validator');
+const { body, header, validationResult } = require('express-validator');
 
 const db = require('../models');
 const { setAuthCookie, clearAuthCookie, requireAuth } = require('../../middleware/auth');
@@ -62,6 +62,12 @@ function emailValidation() {
         .customSanitizer((email) => email.toLowerCase());
 }
 
+function authTabValidation() {
+    return header('X-Auth-Tab')
+        .matches(/^[a-f0-9]{64}$/i)
+        .withMessage('Please refresh the page and try again.');
+}
+
 function publicUser(user) {
     return {
         id: user.id,
@@ -85,6 +91,7 @@ function mailTransport() {
 router.post(
     '/register',
     registerLimiter,
+    authTabValidation(),
     body('name').trim().notEmpty().withMessage('Please enter your name.').isLength({ max: 100 }),
     emailValidation(),
     body('phoneNumber')
@@ -108,7 +115,7 @@ router.post(
                 passwordHash,
                 role: 'customer',
             });
-            setAuthCookie(res, user);
+            setAuthCookie(res, user, req.get('X-Auth-Tab'));
             return res.status(201).json({ user: publicUser(user) });
         } catch (error) {
             if (error.name === 'SequelizeUniqueConstraintError') {
@@ -123,6 +130,7 @@ router.post(
 router.post(
     '/login',
     loginLimiter,
+    authTabValidation(),
     emailValidation(),
     body('password').notEmpty().withMessage('Please enter your password.'),
     async (req, res) => {
@@ -134,7 +142,7 @@ router.post(
             if (!passwordMatches || user.role === 'admin') {
                 return res.status(401).json({ errors: ['Invalid email or password.'] });
             }
-            setAuthCookie(res, user);
+            setAuthCookie(res, user, req.get('X-Auth-Tab'));
             return res.json({ user: publicUser(user) });
         } catch (error) {
             console.error('Login failed:', error.message);
@@ -146,6 +154,7 @@ router.post(
 router.post(
     '/admin-login',
     adminLoginLimiter,
+    authTabValidation(),
     emailValidation(),
     body('password').notEmpty().withMessage('Please enter your password.'),
     async (req, res) => {
@@ -157,7 +166,7 @@ router.post(
             if (!passwordMatches || user.role !== 'admin') {
                 return res.status(401).json({ errors: ['Invalid owner email or password.'] });
             }
-            setAuthCookie(res, user);
+            setAuthCookie(res, user, req.get('X-Auth-Tab'));
             return res.json({ user: publicUser(user) });
         } catch (error) {
             console.error('Owner login failed:', error.message);
@@ -184,6 +193,71 @@ router.get('/me', requireAuth, async (req, res) => {
         return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
     }
 });
+
+router.patch(
+    '/me',
+    requireAuth,
+    body('name').trim().notEmpty().withMessage('Please enter your name.').isLength({ max: 100 }),
+    emailValidation(),
+    async (req, res) => {
+        if (validationErrors(req, res)) return;
+
+        try {
+            const user = await db.User.findByPk(req.user.id);
+            if (!user) {
+                clearAuthCookie(res);
+                return res.status(401).json({ errors: ['Please log in.'] });
+            }
+
+            await user.update({ name: req.body.name, email: req.body.email });
+            return res.json({ user: publicUser(user) });
+        } catch (error) {
+            if (error.name === 'SequelizeUniqueConstraintError') {
+                return res.status(409).json({ errors: ['An account with that email already exists.'] });
+            }
+            console.error('Updating account details failed:', error.message);
+            return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
+        }
+    }
+);
+
+router.post(
+    '/change-password',
+    requireAuth,
+    body('currentPassword').notEmpty().withMessage('Please enter your current password.'),
+    body('newPassword')
+        .isLength({ min: 8, max: 72 })
+        .withMessage('Your new password must be between 8 and 72 characters.')
+        .custom((password) => typeof password === 'string' && Buffer.byteLength(password, 'utf8') <= 72)
+        .withMessage('Your new password must be 72 bytes or fewer.'),
+    async (req, res) => {
+        if (validationErrors(req, res)) return;
+
+        try {
+            const user = await db.User.findByPk(req.user.id);
+            if (!user) {
+                clearAuthCookie(res);
+                return res.status(401).json({ errors: ['Please log in.'] });
+            }
+
+            const passwordMatches = await bcrypt.compare(req.body.currentPassword, user.passwordHash);
+            if (!passwordMatches) {
+                return res.status(400).json({ errors: ['Your current password is incorrect.'] });
+            }
+
+            const passwordHash = await bcrypt.hash(req.body.newPassword, PASSWORD_HASH_ROUNDS);
+            await user.update({
+                passwordHash,
+                resetPasswordTokenHash: null,
+                resetPasswordExpiresAt: null,
+            });
+            return res.json({ message: 'Your password has been changed.' });
+        } catch (error) {
+            console.error('Changing account password failed:', error.message);
+            return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
+        }
+    }
+);
 
 router.post(
     '/forgot-password',

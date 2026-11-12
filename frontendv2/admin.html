@@ -13,7 +13,9 @@
         rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/auth-session.js"></script>
     <script src="js/admin.js" defer></script>
+    <script src="js/auth-nav.js" defer></script>
 </head>
 
 <body>
@@ -22,7 +24,16 @@
             <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
         </a>
         <p class="admin-title">Owner dashboard</p>
-        <button class="button admin-logout" id="logout-button" type="button">Log out</button>
+        <input class="nav-toggle" type="checkbox" id="nav-toggle" />
+        <label class="nav-toggle-button" for="nav-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span class="visually-hidden">Toggle navigation</span>
+        </label>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+        </nav>
     </header>
 
     <main class="admin-main" hidden id="dashboard">
@@ -35,7 +46,23 @@
                 <button class="button button-outline admin-refresh" id="refresh-button" type="button">Refresh</button>
             </div>
 
+            <div class="inquiry-search-controls" role="search" aria-label="Search inquiries">
+                <label class="visually-hidden" for="inquiry-filter-type">Search by</label>
+                <select id="inquiry-filter-type" aria-label="Search by">
+                    <option value="name">Name</option>
+                    <option value="email">Email</option>
+                    <option value="date">Date</option>
+                    <option value="service">Service</option>
+                </select>
+                <label class="visually-hidden" for="inquiry-filter-value">Search value</label>
+                <input id="inquiry-filter-value" type="search" placeholder="Search by name" />
+                <select id="inquiry-service-value" aria-label="Select service" hidden>
+                    <option value="">All services</option>
+                </select>
+                <button class="button button-outline filter-clear" id="clear-filters" type="button">Clear</button>
+            </div>
             <div class="filter-bar" id="filter-bar" role="group" aria-label="Filter inquiries by status"></div>
+            <p class="inquiry-result-count" id="inquiry-result-count" aria-live="polite"></p>
             <p class="form-status" id="dashboard-status" role="status" aria-live="polite"></p>
             <div class="inquiry-list" id="inquiry-list"></div>
         </section>

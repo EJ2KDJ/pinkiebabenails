@@ -101,9 +101,21 @@ a:focus-visible {
 
 .site-nav {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
+  justify-content: center;
   gap: clamp(1rem, 3vw, 2.25rem);
-  margin-left: 0.5rem;
+  min-width: 0;
+  margin: 0;
+}
+
+@media (min-width: 901px) {
+  .site-nav {
+    position: absolute;
+    left: 50%;
+    flex: 0 0 auto;
+    transform: translateX(-50%);
+  }
 }
 
 .site-nav a {
@@ -131,6 +143,89 @@ a:focus-visible {
 .site-nav a:hover::after,
 .site-nav a[aria-current="page"]::after {
   transform: scaleX(1);
+}
+
+.auth-nav-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  margin-left: auto;
+}
+
+.auth-nav-actions > a:not(.auth-nav-login) {
+  position: relative;
+  padding: 0.45rem 0;
+  color: var(--cherry);
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auth-nav-actions > a:not(.auth-nav-login)::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--cherry-bright);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s;
+}
+
+.auth-nav-actions > a:not(.auth-nav-login):hover::after,
+.auth-nav-actions > a:not(.auth-nav-login)[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+.auth-nav-actions .auth-nav-logout {
+  padding: 0.45rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--cherry);
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auth-nav-actions .auth-nav-logout:hover {
+  color: var(--cherry-bright);
+}
+
+.auth-nav-actions .auth-nav-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.55rem 1.2rem;
+  border: 1px solid var(--cherry-bright);
+  border-radius: 999px;
+  background: var(--cherry-bright);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.auth-nav-actions .auth-nav-login:hover {
+  transform: translateY(-1px);
+  background: var(--cherry-deep);
+}
+
+.auth-nav-actions .auth-nav-login::after {
+  display: none;
+}
+
+.auth-nav-status {
+  color: var(--cherry-deep);
+  font-size: 0.9rem;
+  text-align: right;
 }
 
 .nav-toggle,
@@ -723,6 +818,11 @@ a:focus-visible {
   gap: 1.1rem;
 }
 
+.inquiry-appointment-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
 .form-field {
   display: grid;
   gap: 0.35rem;
@@ -751,6 +851,14 @@ fieldset.form-field {
   background: #fff;
   color: var(--text);
   font: inherit;
+}
+
+.inquiry-appointment-row .form-field > input,
+.inquiry-appointment-row .form-field > select {
+  height: 52px;
+  padding: 0 0.8rem;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 .form-field input:focus-visible,
@@ -919,6 +1027,12 @@ fieldset.form-field {
   font-size: 0.98rem;
 }
 
+.account-password-form {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
 .auth-card .inquiry-form .button {
   width: 100%;
 }
@@ -944,17 +1058,6 @@ fieldset.form-field {
   margin: 0;
   color: var(--cherry);
   font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.admin-logout {
-  flex: 0 0 auto;
-  margin-left: auto;
-  min-height: 42px;
-  white-space: nowrap;
-  padding: 0.5rem 1.1rem;
-  cursor: pointer;
-  font: inherit;
   font-weight: 600;
 }
 
@@ -1008,6 +1111,60 @@ fieldset.form-field {
   margin-bottom: 0.75rem;
 }
 
+.inquiry-search-controls {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+.inquiry-search-controls input,
+.inquiry-search-controls select {
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+}
+
+.inquiry-search-controls > input,
+.inquiry-search-controls > select[aria-label="Select service"] {
+  flex: 1;
+}
+
+.inquiry-search-controls > select[aria-label="Search by"] {
+  flex: 0 0 155px;
+}
+
+.filter-clear {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0.5rem 0.9rem;
+  border-color: var(--cherry-bright);
+  color: var(--cherry);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.filter-clear:hover {
+  background: var(--cherry-bright);
+  color: #fff;
+}
+
+.inquiry-result-count {
+  margin: 0 0 0.75rem;
+  color: #76515f;
+  font-size: 0.95rem;
+}
+
 .filter-chip,
 .status-button {
   min-height: 40px;
@@ -1036,6 +1193,30 @@ fieldset.form-field {
 }
 
 .status-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.delete-inquiry-button {
+  min-height: 40px;
+  margin-left: auto;
+  padding: 0.35rem 1rem;
+  border: 1px solid #a51f3d;
+  border-radius: 999px;
+  background: #fff;
+  color: #a51f3d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.delete-inquiry-button:hover:not(:disabled) {
+  background: #a51f3d;
+  color: #fff;
+}
+
+.delete-inquiry-button:disabled {
   cursor: wait;
   opacity: 0.6;
 }
@@ -1159,6 +1340,26 @@ fieldset.form-field {
   .inquiry-details dd {
     margin-bottom: 0.6rem;
   }
+
+  .inquiry-search-controls {
+    flex-wrap: wrap;
+    padding: 0.75rem;
+  }
+
+  .inquiry-search-controls > select[aria-label="Search by"] {
+    flex: 0 0 auto;
+  }
+
+  .inquiry-search-controls > input,
+  .inquiry-search-controls > select[aria-label="Select service"] {
+    flex-basis: 100%;
+    order: 1;
+  }
+
+  .inquiry-search-controls .filter-clear {
+    margin-left: auto;
+    order: 2;
+  }
 }
 
 
@@ -1166,6 +1367,7 @@ fieldset.form-field {
   /* Compact navigation and stack form fields on small screens. */
   .site-header {
     justify-content: space-between;
+    gap: 0.65rem;
   }
 
   .nav-toggle {
@@ -1228,6 +1430,22 @@ fieldset.form-field {
     padding: 0.75rem 0.35rem;
   }
 
+  .auth-nav-actions {
+    gap: 0.5rem;
+  }
+
+  .auth-nav-actions > a:not(.auth-nav-login),
+  .auth-nav-actions .auth-nav-logout {
+    padding: 0.75rem 0.35rem;
+    text-align: left;
+  }
+
+  .auth-nav-actions .auth-nav-login {
+    min-height: 42px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
   .site-nav a::after {
     right: auto;
     width: 2.5rem;
@@ -1255,6 +1473,10 @@ fieldset.form-field {
   }
 
   .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .inquiry-appointment-row {
     grid-template-columns: 1fr;
   }
 

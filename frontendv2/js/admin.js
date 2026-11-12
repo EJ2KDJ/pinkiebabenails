@@ -9,6 +9,10 @@ const loading = document.getElementById('loading');
 const filterBar = document.getElementById('filter-bar');
 const list = document.getElementById('inquiry-list');
 const statusMessage = document.getElementById('dashboard-status');
+const filterType = document.getElementById('inquiry-filter-type');
+const filterValue = document.getElementById('inquiry-filter-value');
+const serviceValue = document.getElementById('inquiry-service-value');
+const resultCount = document.getElementById('inquiry-result-count');
 
 let inquiries = [];
 let currentFilter = 'all';
@@ -38,8 +42,12 @@ function formatDateTime(value) {
 // Talks to the server. A logged-out or non-admin visitor is sent to the owner login page.
 async function api(path, options) {
     const response = await fetch(path, {
-        headers: { 'Content-Type': 'application/json' },
         ...options,
+        headers: {
+            ...window.authSessionHeaders(),
+            'Content-Type': 'application/json',
+            ...(options && options.headers),
+        },
     });
     if (response.status === 401 || response.status === 403) {
         window.location.href = 'admin-login.html';
@@ -94,6 +102,31 @@ function renderFilters() {
     });
 }
 
+function dateInManila(value) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date(value));
+    const date = Object.fromEntries(parts.map(({ type, value: part }) => [type, part]));
+    return `${date.year}-${date.month}-${date.day}`;
+}
+
+function renderServiceOptions() {
+    const selectedService = serviceValue.value;
+    serviceValue.replaceChildren(el('option', '', 'All services'));
+    serviceValue.firstElementChild.value = '';
+    [...new Set(inquiries.map((inquiry) => inquiry.service))]
+        .sort((a, b) => a.localeCompare(b))
+        .forEach((service) => {
+            const option = el('option', '', service);
+            option.value = service;
+            serviceValue.appendChild(option);
+        });
+    serviceValue.value = selectedService;
+}
+
 function renderCard(inquiry) {
     const card = el('article', 'inquiry-card');
 
@@ -139,6 +172,10 @@ function renderCard(inquiry) {
         button.addEventListener('click', () => changeStatus(inquiry, status.value, actions));
         actions.appendChild(button);
     });
+    const deleteButton = el('button', 'delete-inquiry-button', 'Delete inquiry');
+    deleteButton.type = 'button';
+    deleteButton.addEventListener('click', () => deleteInquiry(inquiry, actions));
+    actions.appendChild(deleteButton);
     card.appendChild(actions);
 
     return card;
@@ -148,9 +185,22 @@ function render() {
     renderFilters();
     list.replaceChildren();
 
-    const visible = currentFilter === 'all' ? inquiries : inquiries.filter((i) => i.status === currentFilter);
+    const search = filterValue.value.trim().toLocaleLowerCase();
+    const visible = inquiries.filter((inquiry) => {
+        const matchesStatus = currentFilter === 'all' || inquiry.status === currentFilter;
+        const searchField = filterType.value;
+        const fieldValue = searchField === 'date'
+            ? dateInManila(inquiry.preferredDateTime)
+            : String(inquiry[searchField] || '').toLocaleLowerCase();
+        const query = searchField === 'service' ? serviceValue.value.toLocaleLowerCase() : search;
+        return matchesStatus && (!query || fieldValue.includes(query));
+    });
+
+    resultCount.textContent = `Showing ${visible.length} of ${inquiries.length} inquiries`;
     if (visible.length === 0) {
-        const message = inquiries.length === 0 ? 'No inquiries yet. New ones will appear here.' : 'No inquiries with this status.';
+        const message = inquiries.length === 0
+            ? 'No inquiries yet. New ones will appear here.'
+            : 'No inquiries match the selected filters.';
         list.appendChild(el('p', 'empty-state', message));
         return;
     }
@@ -175,6 +225,23 @@ async function changeStatus(inquiry, status, actions) {
     }
 }
 
+async function deleteInquiry(inquiry, actions) {
+    if (!window.confirm(`Delete the inquiry from ${inquiry.name}? This cannot be undone.`)) return;
+    actions.querySelectorAll('button').forEach((button) => (button.disabled = true));
+    showStatus('', '');
+    try {
+        await api('/api/admin/inquiries/' + inquiry.id, { method: 'DELETE' });
+        inquiries = inquiries.filter((item) => item.id !== inquiry.id);
+        lastSnapshot = JSON.stringify(inquiries);
+        renderServiceOptions();
+        render();
+        showStatus('Inquiry deleted.', 'success');
+    } catch (error) {
+        showStatus(error.message, 'error');
+        actions.querySelectorAll('button').forEach((button) => (button.disabled = false));
+    }
+}
+
 async function loadInquiries(showDone) {
     try {
         const data = await api('/api/admin/inquiries');
@@ -183,6 +250,7 @@ async function loadInquiries(showDone) {
         if (snapshot !== lastSnapshot) {
             inquiries = data.inquiries;
             lastSnapshot = snapshot;
+            renderServiceOptions();
             render();
         }
         showStatus(showDone ? 'Up to date.' : '', 'success');
@@ -195,12 +263,38 @@ async function loadInquiries(showDone) {
 
 document.getElementById('refresh-button').addEventListener('click', () => loadInquiries(true));
 
-document.getElementById('logout-button').addEventListener('click', async () => {
-    try {
-        await fetch('/api/auth/logout', { method: 'POST' });
-    } finally {
-        window.location.href = 'admin-login.html';
+function updateFilterInput() {
+    const field = filterType.value;
+    const isService = field === 'service';
+    filterValue.hidden = isService;
+    serviceValue.hidden = !isService;
+    filterValue.value = '';
+    serviceValue.value = '';
+
+    if (field === 'date') {
+        filterValue.type = 'date';
+        filterValue.placeholder = '';
+        filterValue.setAttribute('aria-label', 'Appointment date');
+    } else {
+        filterValue.type = 'search';
+        filterValue.placeholder = field === 'email' ? 'Search by email' : 'Search by name';
+        filterValue.setAttribute('aria-label', `Search by ${field}`);
     }
+    render();
+}
+
+filterType.addEventListener('change', updateFilterInput);
+filterValue.addEventListener('input', render);
+serviceValue.addEventListener('change', render);
+document.getElementById('clear-filters').addEventListener('click', () => {
+    filterValue.value = '';
+    serviceValue.value = '';
+    currentFilter = 'all';
+    render();
+});
+
+window.addEventListener('auth:logout', () => {
+    window.location.href = 'admin-login.html';
 });
 
 (async function start() {

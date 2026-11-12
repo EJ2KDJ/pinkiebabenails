@@ -1,15 +1,51 @@
 const form = document.getElementById('inquiry-form');
 const statusMessage = document.getElementById('form-status');
 const submitButton = form.querySelector('button[type="submit"]');
-const dateTimeInput = form.elements.preferredDateTime;
+const dateInput = document.getElementById('preferredDate');
+const hourInput = document.getElementById('preferredHour');
 
-// Keep the browser's local datetime-local value aligned with the current local time.
-function setMinimumDateTime() {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    dateTimeInput.min = now.toISOString().slice(0, 16);
+function localDateValue(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
-setMinimumDateTime();
+
+function nextAvailableHour() {
+    const next = new Date();
+    next.setMinutes(0, 0, 0);
+    next.setHours(next.getHours() + 1);
+    return next;
+}
+
+function renderHourOptions() {
+    const selectedHour = hourInput.value;
+    const firstOption = hourInput.options[0];
+    hourInput.replaceChildren(firstOption);
+    const selectedDate = dateInput.value;
+    const earliest = nextAvailableHour();
+    const firstHour = selectedDate === localDateValue(earliest) ? earliest.getHours() : 0;
+
+    for (let hour = firstHour; hour < 24; hour += 1) {
+        const option = document.createElement('option');
+        option.value = String(hour).padStart(2, '0');
+        option.textContent = new Date(2000, 0, 1, hour).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            hour12: true,
+        });
+        hourInput.appendChild(option);
+    }
+
+    hourInput.value = selectedHour;
+}
+
+function setMinimumDate() {
+    dateInput.min = localDateValue(nextAvailableHour());
+    renderHourOptions();
+}
+
+dateInput.addEventListener('change', renderHourOptions);
+setMinimumDate();
 
 function showStatus(message, type) {
     statusMessage.textContent = message;
@@ -29,9 +65,10 @@ form.addEventListener('submit', async (event) => {
         email: data.get('email'),
         phoneNumber: data.get('phoneNumber'),
         service: data.get('service'),
-        // new Date(...) reads the picked time as the visitor's local time (Manila),
-        // and toISOString() converts it so the server stores the correct moment.
-        preferredDateTime: dateTimeInput.value ? new Date(dateTimeInput.value).toISOString() : '',
+        // The date and selected whole hour are local time; convert them to the stored ISO timestamp.
+        preferredDateTime: dateInput.value && hourInput.value
+            ? new Date(`${dateInput.value}T${hourInput.value}:00`).toISOString()
+            : '',
         nailDesignReference: data.get('nailDesignReference'),
         gelProductRemovalNeeded: data.get('gelProductRemovalNeeded') === 'yes',
         website: data.get('website'),
@@ -48,7 +85,7 @@ form.addEventListener('submit', async (event) => {
 
         if (response.ok) {
             form.reset();
-            setMinimumDateTime();
+            setMinimumDate();
             showStatus('Thank you! Your inquiry was sent. We will message you to confirm availability.', 'success');
         } else {
             showStatus((result.errors || ['Something went wrong. Please try again.']).join(' '), 'error');

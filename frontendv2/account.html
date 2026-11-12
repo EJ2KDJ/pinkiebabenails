@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff4f6" />
+    <meta name="robots" content="noindex" />
+    <title>My Account | PinkieBabe Nails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/auth-session.js"></script>
+    <script src="js/account.js" defer></script>
+    <script src="js/auth-nav.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
+            <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
+        </a>
+        <input class="nav-toggle" type="checkbox" id="nav-toggle" />
+        <label class="nav-toggle-button" for="nav-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span class="visually-hidden">Toggle navigation</span>
+        </label>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About Us</a>
+            <a href="services.html">Services &amp; Pricing</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <section class="page-header">
+        <p class="eyebrow">PinkieBabe Nails</p>
+        <h1>My Account</h1>
+        <p>Update your account information and password.</p>
+    </section>
+
+    <main class="content-section auth-content">
+        <section class="auth-card" aria-labelledby="account-heading">
+            <h2 id="account-heading">Account details</h2>
+            <p class="form-status" id="account-status" role="status" aria-live="polite">Loading your account...</p>
+            <form class="inquiry-form account-form" id="account-form" hidden>
+                <div class="form-field">
+                    <label for="account-name">Name</label>
+                    <input id="account-name" name="name" type="text" autocomplete="name" maxlength="100" required />
+                </div>
+                <div class="form-field">
+                    <label for="account-email">Email</label>
+                    <input id="account-email" name="email" type="email" autocomplete="email" required />
+                </div>
+                <p class="form-status" id="profile-status" role="status" aria-live="polite"></p>
+                <button class="button" id="profile-submit" type="submit">Save changes</button>
+            </form>
+
+            <form class="inquiry-form account-form account-password-form" id="password-form" hidden>
+                <h2>Change password</h2>
+                <div class="form-field">
+                    <label for="current-password">Current password</label>
+                    <input id="current-password" name="currentPassword" type="password" autocomplete="current-password" required />
+                </div>
+                <div class="form-field">
+                    <label for="new-password">New password</label>
+                    <input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required />
+                </div>
+                <p class="form-status" id="password-status" role="status" aria-live="polite"></p>
+                <button class="button" id="password-submit" type="submit">Change password</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
+    </footer>
+</body>
+</html>

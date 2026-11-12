@@ -11,7 +11,7 @@ function showStatus(message, type) {
 
 async function redirectIfAdminIsLoggedIn() {
     try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/auth/me', { headers: window.authSessionHeaders() });
         if (!response.ok) return;
         const result = await response.json();
         if (result.user.role === 'admin') {
@@ -37,7 +37,7 @@ form.addEventListener('submit', async (event) => {
     try {
         const response = await fetch('/api/auth/admin-login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...window.authSessionHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 email: form.elements.email.value,
                 password: form.elements.password.value,

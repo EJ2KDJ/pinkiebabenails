@@ -20,8 +20,8 @@ function cookieOptions() {
     };
 }
 
-function setAuthCookie(res, user) {
-    const token = jwt.sign({ id: user.id, role: user.role }, getSecret(), {
+function setAuthCookie(res, user, tabId) {
+    const token = jwt.sign({ id: user.id, role: user.role, tabId }, getSecret(), {
         algorithm: 'HS256',
         expiresIn: '7d',
     });
@@ -72,6 +72,9 @@ function requireAuth(req, res, next) {
 
     try {
         req.user = jwt.verify(token, getSecret(), { algorithms: ['HS256'] });
+        if (!req.user.tabId || req.get('X-Auth-Tab') !== req.user.tabId) {
+            return res.status(401).json({ errors: ['Please log in in this tab.'] });
+        }
         return next();
     } catch (error) {
         const badToken = ['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError'].includes(error.name);

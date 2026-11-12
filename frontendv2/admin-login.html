@@ -13,7 +13,9 @@
         rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/auth-session.js"></script>
     <script src="js/admin-login.js" defer></script>
+    <script src="js/auth-nav.js" defer></script>
 </head>
 
 <body>
@@ -21,6 +23,13 @@
         <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
             <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
         </a>
+        <input class="nav-toggle" type="checkbox" id="nav-toggle" />
+        <label class="nav-toggle-button" for="nav-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span class="visually-hidden">Toggle navigation</span>
+        </label>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html">Home</a>
         </nav>

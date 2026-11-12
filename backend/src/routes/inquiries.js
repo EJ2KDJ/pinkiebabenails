@@ -37,8 +37,17 @@ const validateInquiry = [
         .isISO8601()
         .withMessage('Please choose a preferred date and time.')
         .bail()
-        .custom((value) => new Date(value) > new Date())
-        .withMessage('Preferred date and time must be in the future.'),
+        .custom((value) => {
+            const date = new Date(value);
+            return Number.isFinite(date.getTime()) && date > new Date();
+        })
+        .withMessage('Preferred date and time must be in the future.')
+        .bail()
+        .custom((value) => {
+            const date = new Date(value);
+            return date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0 && date.getUTCMilliseconds() === 0;
+        })
+        .withMessage('Please choose an appointment time on the hour.'),
     body('nailDesignReference').optional({ values: 'falsy' }).trim().isLength({ max: 1000 }),
     body('gelProductRemovalNeeded').isBoolean().withMessage('Please choose Yes or No.').toBoolean(),
 ];
