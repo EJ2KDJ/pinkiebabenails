@@ -3,50 +3,69 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#fff4f6" />
+    <meta name="theme-color" content="#2a0a12" />
     <title>About Us | PinkieBabe Nails</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
+    
 </head>
 <body>
-    <header class="site-header">
-        <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
-            <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
-        </a>
-        <input class="nav-toggle" type="checkbox" id="nav-toggle" />
-        <label class="nav-toggle-button" for="nav-toggle">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span class="visually-hidden">Toggle navigation</span>
-        </label>
-        <nav class="site-nav" aria-label="Main navigation">
-            <a href="index.html">Home</a>
-            <a href="about.html" aria-current="page">About Us</a>
-            <a href="services.html">Services &amp; Pricing</a>
-            <a href="contact.html">Contact</a>
-        </nav>
-    </header>
-    <main>
-        <section class="owner-hero">
+    <div class="stage">
+        <div class="hero hero-page">
+            <input class="nav-toggle" type="checkbox" id="nav-toggle" />
+            <label class="nav-toggle-button" for="nav-toggle">
+                <span></span><span></span><span></span>
+                <span class="visually-hidden">Toggle navigation</span>
+            </label>
+
+            <nav class="site-nav" aria-label="Main navigation">
+                <a class="link" href="about.html" aria-current="page">About</a>
+                <a class="link" href="services.html">Services</a>
+                <a class="link" href="gallery.html">Gallery</a>
+                <a class="link" href="contact.html">Contact</a>
+                <a class="link book-link" href="book.html">Book Now</a>
+                <div class="social">
+                    <a href="https://www.facebook.com/pinkiebabe1202" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8V6.5c0-.7.2-1 1.1-1H17V2h-2.6C11.4 2 10 3.700 10 6.200V8H8v3.500h2V22h4V11.500h2.700L17 8h-3z"/></svg>
+                    </a>
+                    <a href="https://www.instagram.com/pinkiebabe3/" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3.500A4.500 4.500 0 1 1 7.500 12 4.500 4.500 0 0 1 12 7.500zm0 2A2.500 2.500 0 1 0 14.500 12 2.500 2.500 0 0 0 12 9.500zM17.300 5.700a1 1 0 1 1-1 1 1 1 0 0 1 1-1z"/></svg>
+                    </a>
+                </div>
+            </nav>
+
+            <a class="brand" href="index.html" aria-label="PinkieBabe Nails home">
+                <span class="caps">P</span><span class="small">inkie</span><span class="caps">B</span><span class="small">abe</span> <span class="small">Nails</span>
+            </a>
+            <section class="owner-hero">
             <div class="owner-intro">
                 <p class="eyebrow">The heart behind PinkieBabe</p>
                 <h1>Elaine Navarro Reyes</h1>
                 <p class="owner-title">CEO &amp; Founder of PinkieBabe Nails</p>
             </div>
         </section>
+        </div>
+        <main>
+        
 
         <section class="content-section owner-story">
             <p>With over five years of professional salon experience in hair, nails, manicures, pedicures, facials, and massage, Elaine launched PinkieBabe Nails as a home-service business in 2020.</p>
             <p>Starting with simple and transparent price lists shared in local community groups, PinkieBabe Nails has grown through strong client loyalty and recommendations built on trusted, top-quality care right at your doorstep.</p>
         </section>
     </main>
-
-    <footer class="site-footer">
-        <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
-    </footer>
+        <div class="legal">
+            <div class="legal-inner">
+                <a href="#">Terms of Use</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+        </div>
+        <footer class="site-footer">
+            <span>&copy; 2026 PinkieBabe Nails</span>
+            <strong>Pinkie<span>Babe</span> by Elaine</strong>
+        </footer>
+    </div>
 </body>
 </html>
