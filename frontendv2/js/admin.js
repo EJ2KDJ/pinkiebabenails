@@ -13,10 +13,26 @@ const filterType = document.getElementById('inquiry-filter-type');
 const filterValue = document.getElementById('inquiry-filter-value');
 const serviceValue = document.getElementById('inquiry-service-value');
 const resultCount = document.getElementById('inquiry-result-count');
+const bookingsTab = document.getElementById('bookings-tab');
+const inquiriesTab = document.getElementById('inquiries-tab');
+const bookingsPanel = document.getElementById('bookings-panel');
+const inquiriesPanel = document.getElementById('inquiries-panel');
+const bookingsList = document.getElementById('booking-list');
+const bookingsStatus = document.getElementById('bookings-status');
+const openHourSelect = document.getElementById('setting-open-hour');
+const closeHourSelect = document.getElementById('setting-close-hour');
+const daysOffCalendar = document.getElementById('days-off-calendar');
+const daysOffSummary = document.getElementById('days-off-summary');
+const calendarMonthLabel = document.getElementById('calendar-month');
+const settingsStatus = document.getElementById('settings-status');
 
 let inquiries = [];
 let currentFilter = 'all';
 let lastSnapshot = '';
+let bookings = [];
+let lastBookingSnapshot = '';
+let daysOff = new Set();
+let calendarMonth = currentManilaMonth();
 
 // Builds an element and sets its text safely. Customer text is never inserted as HTML.
 function el(tag, className, text) {
@@ -55,7 +71,9 @@ async function api(path, options) {
     }
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-        throw new Error((data.errors || ['Something went wrong. Please try again.']).join(' '));
+        const error = new Error((data.errors || ['Something went wrong. Please try again.']).join(' '));
+        error.status = response.status;
+        throw error;
     }
     return data;
 }
@@ -207,6 +225,297 @@ function render() {
     visible.forEach((inquiry) => list.appendChild(renderCard(inquiry)));
 }
 
+function showBookingStatus(message, type) {
+    bookingsStatus.textContent = message;
+    bookingsStatus.className = 'form-status' + (type ? ' form-status-' + type : '');
+}
+
+function showSettingsStatus(message, type) {
+    settingsStatus.textContent = message;
+    settingsStatus.className = 'form-status' + (type ? ' form-status-' + type : '');
+}
+
+function formatBookingWhen(value, includeYear = true) {
+    const date = new Date(value);
+    const dateOptions = {
+        timeZone: 'Asia/Manila',
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+    };
+    if (includeYear) dateOptions.year = 'numeric';
+    const day = date.toLocaleDateString('en-US', dateOptions);
+    const time = date.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Manila',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+    return `${day} at ${time}`;
+}
+
+function renderBookingCard(booking) {
+    const customer = booking.User || {};
+    const name = customer.name || 'Customer';
+    const card = el('article', 'booking-admin-card');
+    const header = el('div', 'booking-admin-card-head');
+    const nameBlock = el('div');
+    nameBlock.appendChild(el('h2', 'booking-customer-name', name));
+    nameBlock.appendChild(el('p', 'booking-admin-time', formatBookingWhen(booking.startsAt)));
+    header.appendChild(nameBlock);
+    header.appendChild(el(
+        'span',
+        `booking-admin-status booking-admin-status-${booking.status}`,
+        booking.status.charAt(0).toUpperCase() + booking.status.slice(1)
+    ));
+    card.appendChild(header);
+
+    const details = el('dl', 'booking-admin-details');
+    let phone = 'Phone number unavailable';
+    if (customer.phoneNumber) {
+        phone = el('a', 'text-link', customer.phoneNumber);
+        phone.href = `tel:${customer.phoneNumber.replace(/[^0-9+]/g, '')}`;
+    }
+    detailRow(details, 'Phone', phone);
+    if (customer.email) {
+        const email = el('a', 'text-link', customer.email);
+        email.href = `mailto:${customer.email}`;
+        detailRow(details, 'Email', email);
+    }
+    detailRow(details, 'Service', booking.service);
+    card.appendChild(details);
+
+    if (booking.status === 'pending') {
+        const actions = el('div', 'booking-admin-actions');
+        const accept = el('button', 'booking-action booking-accept', 'Accept');
+        accept.type = 'button';
+        accept.addEventListener('click', () => changeBookingStatus(booking, 'accepted', actions));
+        const decline = el('button', 'booking-action booking-decline', 'Decline');
+        decline.type = 'button';
+        decline.addEventListener('click', () => changeBookingStatus(booking, 'declined', actions));
+        actions.append(accept, decline);
+        card.appendChild(actions);
+    }
+
+    return card;
+}
+
+function renderBookings() {
+    bookingsList.replaceChildren();
+    const ordered = bookings.slice().sort((first, second) => {
+        const firstPending = first.status === 'pending' ? 0 : 1;
+        const secondPending = second.status === 'pending' ? 0 : 1;
+        if (firstPending !== secondPending) return firstPending - secondPending;
+        return new Date(second.createdAt) - new Date(first.createdAt);
+    });
+
+    if (ordered.length === 0) {
+        bookingsList.appendChild(el('p', 'empty-state', 'No booking requests yet.'));
+        return;
+    }
+    ordered.forEach((booking) => bookingsList.appendChild(renderBookingCard(booking)));
+}
+
+async function loadBookings(showDone) {
+    try {
+        const data = await api('/api/admin/bookings');
+        const snapshot = JSON.stringify(data.bookings);
+        if (snapshot !== lastBookingSnapshot) {
+            bookings = data.bookings;
+            lastBookingSnapshot = snapshot;
+            renderBookings();
+        }
+        showBookingStatus(showDone ? 'Bookings are up to date.' : '', 'success');
+    } catch (error) {
+        if (error.message !== 'Not logged in.') {
+            showBookingStatus(`Could not load bookings. ${error.message}`, 'error');
+        }
+    }
+}
+
+async function changeBookingStatus(booking, status, actions) {
+    const customerName = booking.User && booking.User.name ? booking.User.name : 'this customer';
+    const verb = status === 'accepted' ? 'Accept' : 'Decline';
+    if (!window.confirm(`${verb} ${customerName}'s booking for ${formatBookingWhen(booking.startsAt, false)}?`)) {
+        return;
+    }
+
+    actions.querySelectorAll('button').forEach((button) => {
+        button.disabled = true;
+    });
+    showBookingStatus('', '');
+    try {
+        await api(`/api/admin/bookings/${booking.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        });
+        await loadBookings(false);
+        showBookingStatus(`Booking ${status}.`, 'success');
+    } catch (error) {
+        if (error.status === 409 && status === 'accepted') {
+            showBookingStatus('You already accepted another booking for this time. Refresh the list and choose another.', 'error');
+            await loadBookings(false);
+            showBookingStatus('You already accepted another booking for this time. Refresh the list and choose another.', 'error');
+        } else {
+            showBookingStatus(error.message, 'error');
+            actions.querySelectorAll('button').forEach((button) => {
+                button.disabled = false;
+            });
+        }
+    }
+}
+
+function currentManilaMonth() {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: '2-digit',
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return new Date(Date.UTC(Number(values.year), Number(values.month) - 1, 1));
+}
+
+function dayOffKey(year, month, day) {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function formattedDayOff(dateKey) {
+    return new Date(`${dateKey}T12:00:00.000Z`).toLocaleDateString('en-PH', {
+        timeZone: 'UTC',
+        dateStyle: 'medium',
+    });
+}
+
+function renderDaysOffCalendar() {
+    const year = calendarMonth.getUTCFullYear();
+    const month = calendarMonth.getUTCMonth() + 1;
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+    calendarMonthLabel.textContent = calendarMonth.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
+        month: 'long',
+        year: 'numeric',
+    });
+    daysOffCalendar.replaceChildren();
+
+    ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach((weekday) => {
+        daysOffCalendar.appendChild(el('span', 'calendar-weekday', weekday));
+    });
+    for (let blank = 0; blank < firstWeekday; blank += 1) {
+        daysOffCalendar.appendChild(el('span', 'calendar-empty', ''));
+    }
+    for (let day = 1; day <= daysInMonth; day += 1) {
+        const dateKey = dayOffKey(year, month, day);
+        const selected = daysOff.has(dateKey);
+        const button = el('button', `calendar-day${selected ? ' is-day-off' : ''}`, String(day));
+        button.type = 'button';
+        button.dataset.date = dateKey;
+        button.setAttribute('aria-label', `${formattedDayOff(dateKey)}${selected ? ', day off' : ''}`);
+        button.setAttribute('aria-pressed', String(selected));
+        button.addEventListener('click', () => {
+            if (daysOff.has(dateKey)) {
+                daysOff.delete(dateKey);
+            } else {
+                daysOff.add(dateKey);
+            }
+            renderDaysOffCalendar();
+        });
+        daysOffCalendar.appendChild(button);
+    }
+
+    const selectedDates = [...daysOff].sort();
+    daysOffSummary.textContent = selectedDates.length
+        ? `Selected days off: ${selectedDates.map(formattedDayOff).join(', ')}`
+        : 'No days off selected.';
+}
+
+function fillHourOptions(select, firstHour, lastHour) {
+    select.replaceChildren();
+    for (let hour = firstHour; hour <= lastHour; hour += 1) {
+        const option = document.createElement('option');
+        option.value = String(hour);
+        if (hour === 24) {
+            option.textContent = '12:00 AM (midnight)';
+        } else {
+            option.textContent = new Date(Date.UTC(2020, 0, 1, hour)).toLocaleTimeString('en-US', {
+                timeZone: 'UTC',
+                hour: 'numeric',
+                minute: '2-digit',
+            });
+        }
+        select.appendChild(option);
+    }
+}
+
+async function loadSettings() {
+    try {
+        const data = await api('/api/admin/settings');
+        fillHourOptions(openHourSelect, 0, 23);
+        fillHourOptions(closeHourSelect, 1, 24);
+        openHourSelect.value = String(data.settings.openHour);
+        closeHourSelect.value = String(data.settings.closeHour);
+        daysOff = new Set(data.settings.daysOff);
+        renderDaysOffCalendar();
+        showSettingsStatus('', '');
+    } catch (error) {
+        if (error.message !== 'Not logged in.') {
+            showSettingsStatus(`Could not load settings. ${error.message}`, 'error');
+        }
+    }
+}
+
+async function saveSettings() {
+    const saveButton = document.getElementById('settings-save');
+    saveButton.disabled = true;
+    showSettingsStatus('', '');
+    try {
+        const data = await api('/api/admin/settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+                openHour: Number(openHourSelect.value),
+                closeHour: Number(closeHourSelect.value),
+                daysOff: [...daysOff].sort(),
+            }),
+        });
+        daysOff = new Set(data.settings.daysOff);
+        showSettingsStatus('Settings saved.', 'success');
+    } catch (error) {
+        showSettingsStatus(error.message, 'error');
+    } finally {
+        saveButton.disabled = false;
+    }
+}
+
+function selectAdminTab(name) {
+    const showBookings = name === 'bookings';
+    bookingsTab.setAttribute('aria-selected', String(showBookings));
+    bookingsTab.tabIndex = showBookings ? 0 : -1;
+    inquiriesTab.setAttribute('aria-selected', String(!showBookings));
+    inquiriesTab.tabIndex = showBookings ? -1 : 0;
+    bookingsPanel.hidden = !showBookings;
+    inquiriesPanel.hidden = showBookings;
+}
+
+bookingsTab.addEventListener('click', () => selectAdminTab('bookings'));
+inquiriesTab.addEventListener('click', () => selectAdminTab('inquiries'));
+document.querySelector('.admin-tabs').addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+        event.preventDefault();
+        const nextTab = event.target === bookingsTab ? inquiriesTab : bookingsTab;
+        selectAdminTab(nextTab === bookingsTab ? 'bookings' : 'inquiries');
+        nextTab.focus();
+    }
+});
+document.getElementById('bookings-refresh').addEventListener('click', () => loadBookings(true));
+document.getElementById('settings-save').addEventListener('click', saveSettings);
+document.getElementById('calendar-previous').addEventListener('click', () => {
+    calendarMonth = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1));
+    renderDaysOffCalendar();
+});
+document.getElementById('calendar-next').addEventListener('click', () => {
+    calendarMonth = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1));
+    renderDaysOffCalendar();
+});
+
 async function changeStatus(inquiry, status, actions) {
     if (inquiry.status === status) return;
     actions.querySelectorAll('button').forEach((b) => (b.disabled = true));
@@ -309,6 +618,9 @@ window.addEventListener('auth:logout', () => {
     }
     loading.hidden = true;
     dashboard.hidden = false;
-    await loadInquiries(false);
-    setInterval(() => loadInquiries(false), 60000); // new inquiries show up by themselves
+    await Promise.all([loadBookings(false), loadSettings(), loadInquiries(false)]);
+    setInterval(() => {
+        loadBookings(false);
+        loadInquiries(false);
+    }, 60000);
 })();

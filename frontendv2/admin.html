@@ -33,11 +33,72 @@
         </label>
         <nav class="site-nav" aria-label="Main navigation">
             <a href="index.html">Home</a>
+            <a href="book.html">Book</a>
         </nav>
     </header>
 
     <main class="admin-main" hidden id="dashboard">
-        <section aria-labelledby="inquiries-heading">
+        <div class="admin-tabs" role="tablist" aria-label="Owner dashboard sections">
+            <button class="admin-tab" id="bookings-tab" type="button" role="tab"
+                aria-controls="bookings-panel" aria-selected="true">Bookings</button>
+            <button class="admin-tab" id="inquiries-tab" type="button" role="tab"
+                aria-controls="inquiries-panel" aria-selected="false" tabindex="-1">Inquiries</button>
+        </div>
+
+        <section class="admin-panel" id="bookings-panel" role="tabpanel"
+            aria-labelledby="bookings-tab">
+            <div class="admin-toolbar">
+                <div>
+                    <p class="eyebrow">Appointment requests</p>
+                    <h1 id="bookings-heading">Bookings</h1>
+                    <p class="booking-email-note">New requests also arrive in your email.</p>
+                </div>
+                <button class="button button-outline admin-refresh" id="bookings-refresh" type="button">Refresh</button>
+            </div>
+            <p class="form-status" id="bookings-status" role="status" aria-live="polite"></p>
+            <div class="booking-admin-list" id="booking-list"></div>
+
+            <section class="settings-card" aria-labelledby="settings-heading">
+                <div class="section-heading">
+                    <p class="eyebrow">Salon hours and days off</p>
+                    <h2 id="settings-heading">Settings</h2>
+                    <p>Choose when customers can request an appointment.</p>
+                </div>
+                <div class="settings-hours">
+                    <div class="form-field">
+                        <label for="setting-open-hour">Opening time</label>
+                        <select id="setting-open-hour"></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="setting-close-hour">Closing time</label>
+                        <select id="setting-close-hour"></select>
+                    </div>
+                </div>
+                <section class="days-off-section" aria-labelledby="days-off-heading">
+                    <div class="days-off-heading">
+                        <div>
+                            <h3 id="days-off-heading">Days off</h3>
+                            <p>Tap dates when the salon will be closed.</p>
+                        </div>
+                        <div class="calendar-month-controls">
+                            <button class="calendar-nav" id="calendar-previous" type="button"
+                                aria-label="Previous month">Previous</button>
+                            <strong id="calendar-month" aria-live="polite"></strong>
+                            <button class="calendar-nav" id="calendar-next" type="button"
+                                aria-label="Next month">Next</button>
+                        </div>
+                    </div>
+                    <div class="days-off-calendar" id="days-off-calendar" role="group"
+                        aria-label="Choose days off"></div>
+                    <p class="days-off-summary" id="days-off-summary"></p>
+                </section>
+                <p class="form-status" id="settings-status" role="status" aria-live="polite"></p>
+                <button class="button settings-save" id="settings-save" type="button">Save settings</button>
+            </section>
+        </section>
+
+        <section class="admin-panel" id="inquiries-panel" role="tabpanel"
+            aria-labelledby="inquiries-tab" hidden>
             <div class="admin-toolbar">
                 <div>
                     <p class="eyebrow">Messages from the website</p>

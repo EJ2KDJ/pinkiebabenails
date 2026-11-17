@@ -13,6 +13,15 @@ if (siteNav) {
     authStatus.hidden = true;
     authActions.appendChild(authStatus);
 
+    const mobileMenu = window.matchMedia('(max-width: 640px)');
+    function placeAuthActions() {
+        const parent = mobileMenu.matches ? siteNav : siteNav.parentElement;
+        if (authActions.parentElement !== parent) parent.appendChild(authActions);
+    }
+
+    placeAuthActions();
+    mobileMenu.addEventListener('change', placeAuthActions);
+
     function setAuthStatus(message) {
         authStatus.textContent = message;
         authStatus.hidden = !message;
