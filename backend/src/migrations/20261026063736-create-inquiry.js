@@ -2,6 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // Create the initial table for contact details and requested nail services.
     await queryInterface.createTable('Inquiries', {
       id: {
         allowNull: false,
@@ -38,6 +39,7 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
+    // Reverse the initial migration when rolling back the schema.
     await queryInterface.dropTable('Inquiries');
   }
 };

@@ -3,13 +3,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#fff4f6" />
+    <meta name="theme-color" content="#2a0a12" />
     <title>About Us | PinkieBabe Nails</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/auth-session.js"></script>
+    <script src="js/auth-nav.js" defer></script>
 </head>
 <body>
     <header class="site-header">
@@ -24,13 +26,16 @@
             <span class="visually-hidden">Toggle navigation</span>
         </label>
         <nav class="site-nav" aria-label="Main navigation">
-            <a href="index.html">Home</a>
-            <a href="about.html" aria-current="page">About Us</a>
-            <a href="services.html">Services &amp; Pricing</a>
-            <a href="contact.html">Contact</a>
+            <a class="link" href="index.html">Home</a>
+            <a class="link" href="about.html" aria-current="page">About Us</a>
+            <a class="link" href="services.html">Services</a>
+            <a class="link" href="gallery.html">Gallery</a>
+            <a class="link book-link" href="book.html">Book</a>
+            <a class="link" href="contact.html">Contact</a>
         </nav>
     </header>
     <main>
+        <!-- Introduces the owner over the page's full-width background image. -->
         <section class="owner-hero">
             <div class="owner-intro">
                 <p class="eyebrow">The heart behind PinkieBabe</p>
@@ -39,9 +44,10 @@
             </div>
         </section>
 
+        <!-- Shares the business background and the owner's professional experience. -->
         <section class="content-section owner-story">
-            <p>With over five years of professional salon experience in hair, nails, manicures, pedicures, facials, and massage, Elaine launched PinkieBabe Nails as a home-service business in 2020.</p>
-            <p>Starting with simple and transparent price lists shared in local community groups, PinkieBabe Nails has grown through strong client loyalty and recommendations built on trusted, top-quality care right at your doorstep.</p>
+            <p>With over five years of professional salon experience in hair, nails, manicures, pedicures, facials, and massage, Elaine launched PinkieBabe Nails in 2020 and welcomes clients to her salon.</p>
+            <p>Starting with simple and transparent price lists shared in local community groups, PinkieBabe Nails has grown through strong client loyalty and recommendations for trusted, top-quality care at the shop.</p>
         </section>
     </main>
 

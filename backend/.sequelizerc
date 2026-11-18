@@ -1,4 +1,4 @@
-// custom path for src
+// Point Sequelize CLI at the source-based config, model, migration, and seed folders.
 const path = require('path');
 
 module.exports = {

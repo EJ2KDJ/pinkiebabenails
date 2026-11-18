@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2a0a12" />
+    <title>Book an appointment | PinkieBabe Nails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <script src="js/auth-session.js"></script>
+    <script src="js/book.js" defer></script>
+    <script src="js/auth-nav.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
+            <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
+        </a>
+        <input class="nav-toggle" type="checkbox" id="nav-toggle" />
+        <label class="nav-toggle-button" for="nav-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span class="visually-hidden">Toggle navigation</span>
+        </label>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a class="link" href="index.html">Home</a>
+            <a class="link" href="about.html">About Us</a>
+            <a class="link" href="services.html">Services</a>
+            <a class="link" href="gallery.html">Gallery</a>
+            <a class="link book-link" href="book.html" aria-current="page">Book</a>
+            <a class="link" href="contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <section class="page-header">
+        <p class="eyebrow">PinkieBabe Nails</p>
+        <h1>Book an appointment</h1>
+        <p>Choose a day and time to send an appointment request.</p>
+    </section>
+
+    <main class="booking-main" id="book-page" hidden>
+        <section class="book-login-card" id="booking-login" aria-labelledby="booking-login-heading" hidden>
+            <h2 id="booking-login-heading">Please log in or sign up to book</h2>
+            <p>Your account lets you send a request and check its status later.</p>
+            <div class="book-login-actions">
+                <a class="button" href="login.html">Log in</a>
+                <a class="book-secondary-button" href="login.html?mode=signup">Sign up</a>
+            </div>
+        </section>
+
+        <div id="booking-content" hidden>
+            <p class="booking-note">A request is not confirmed until the owner accepts it. Pending requests do not reserve a time.</p>
+
+            <form class="booking-form" id="booking-form">
+                <div class="form-field">
+                    <label for="booking-date">Choose a date</label>
+                    <input id="booking-date" name="date" type="date" required />
+                </div>
+
+                <section class="booking-time-section" aria-labelledby="booking-time-heading">
+                    <h2 id="booking-time-heading">Choose an available time</h2>
+                    <p class="booking-help">Times are shown in the salon's local time.</p>
+                    <div class="booking-slot-grid" id="booking-slots"></div>
+                    <p class="form-status" id="availability-status" role="status" aria-live="polite"></p>
+                </section>
+
+                <div class="form-field">
+                    <label for="booking-service">Service</label>
+                    <select id="booking-service" name="service" required>
+                        <option value="" selected disabled>Choose a service</option>
+                        <option>Soft gel extensions</option>
+                        <option>Gel manicure</option>
+                        <option>Manicure</option>
+                        <option>Pedicure</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="booking-notes">Nail design or reference notes (optional)</label>
+                    <textarea id="booking-notes" name="nailDesignReference" maxlength="1000"
+                        placeholder="Share a design idea or a link to a reference photo."></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label for="gel-removal">Do you need gel/product removal?</label>
+                    <select id="gel-removal" name="gelProductRemovalNeeded" required>
+                        <option value="" selected disabled>Choose Yes or No</option>
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+
+                <p class="form-status" id="booking-status" role="status" aria-live="polite"></p>
+                <button class="button booking-submit" id="booking-submit" type="submit" disabled>Confirm request</button>
+            </form>
+
+            <section class="customer-bookings" aria-labelledby="customer-bookings-heading">
+                <h2 id="customer-bookings-heading">My bookings</h2>
+                <p class="booking-help">You can check the status of your requests here.</p>
+                <div class="customer-booking-list" id="customer-booking-list"></div>
+            </section>
+        </div>
+    </main>
+
+    <p class="booking-loading" id="booking-loading" role="status">Checking your sign-in...</p>
+
+    <footer class="site-footer">
+        <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
+    </footer>
+</body>
+
+</html>

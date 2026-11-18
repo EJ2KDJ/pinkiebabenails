@@ -5,10 +5,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Inquiry extends Model {
     static associate(models) {
-      // Add associations here if needed later.
+      // This model has no related tables; add associations here if that changes.
     }
   }
 
+  // Defines the fields Sequelize persists for a customer's appointment inquiry.
   Inquiry.init(
     {
       name: {

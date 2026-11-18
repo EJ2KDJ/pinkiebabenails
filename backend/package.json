@@ -1,10 +1,12 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "migrate": "sequelize-cli db:migrate --config src/config/config.js --migrations-path src/migrations",
+    "provision-admin": "node scripts/provision-admin.js"
   },
   "keywords": [],
   "author": "",

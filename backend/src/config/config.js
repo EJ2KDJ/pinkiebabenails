@@ -1,6 +1,6 @@
 const pg = require('pg');
 require('dotenv').config();
-
+// Both environments use the hosted PostgreSQL URL supplied outside source control.
 const base = {
   use_env_variable: 'DATABASE_URL',
   dialect: 'postgres',
@@ -11,7 +11,7 @@ const base = {
       rejectUnauthorized: false,
     },
   },
-  logging: false, // Disable logging for production
+  logging: false, // Avoid logging SQL statements, which can expose submitted data.
 };
 
 module.exports = { development: base, production: base };
