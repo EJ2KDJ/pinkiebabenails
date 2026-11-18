@@ -25,6 +25,73 @@ function formatBookingTime(startsAt) {
     });
 }
 
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    })[character]);
+}
+
+function bookingDecisionEmailHtml({ name, service, when, accepted, policiesUrl, bookUrl }) {
+    const heading = accepted ? 'Your booking is accepted' : 'An update on your booking';
+    const nextSteps = accepted
+        ? `
+            <h2 style="margin:24px 0 8px;color:#8f2048;font-size:20px;">What happens next?</h2>
+            <p style="margin:0 0 14px;">Please message us on Facebook or Instagram to arrange your downpayment. Your appointment slot is secured only after the downpayment is confirmed.</p>
+            <ul style="padding-left:22px;margin:0 0 18px;">
+                <li style="margin-bottom:6px;">Soft gel extensions: ₱300.</li>
+                <li style="margin-bottom:6px;">Gel manicure: ₱200.</li>
+                <li style="margin-bottom:6px;">The downpayment is deducted from your total and is non-refundable.</li>
+                <li style="margin-bottom:6px;">Pay through the GCash account provided by the owner, then send a screenshot of your proof of payment.</li>
+                <li>No downpayment, no secured slot. Wait for confirmation that your payment and appointment slot are confirmed.</li>
+            </ul>
+            <p style="margin:0 0 18px;"><a href="${escapeHtml(policiesUrl)}" style="color:#8f2048;font-weight:700;">Read the Downpayment &amp; appointment policies</a></p>
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                <td style="padding:0 10px 0 0;"><a href="https://www.facebook.com/pinkiebabe1202" style="display:inline-block;background:#ad2856;color:#fff;padding:11px 16px;text-decoration:none;font-weight:700;">Message on Facebook</a></td>
+                <td><a href="https://www.instagram.com/pinkiebabe3/" style="display:inline-block;background:#ad2856;color:#fff;padding:11px 16px;text-decoration:none;font-weight:700;">Message on Instagram</a></td>
+            </tr></table>`
+        : `
+            <p style="margin:18px 0;">We’re sorry, but we can’t accept this request. Please choose another available time and send us a new request. We hope to see you soon!</p>
+            <p style="margin:22px 0 0;"><a href="${escapeHtml(bookUrl)}" style="display:inline-block;background:#ad2856;color:#fff;padding:12px 20px;text-decoration:none;font-weight:700;">Choose another time</a></p>`;
+
+    return `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#fff4f6;color:#40202b;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;">
+    <div style="display:none;max-height:0;overflow:hidden;">${escapeHtml(heading)} — PinkieBabe Nails</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff4f6;padding:28px 12px;">
+        <tr><td align="center">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#fffafb;border:1px solid #ecc5d1;">
+                <tr><td style="background:#8f2048;padding:26px 30px;text-align:center;color:#fff;">
+                    <p style="margin:0;font-family:Georgia,serif;font-size:25px;font-weight:700;letter-spacing:1px;">PinkieBabe Nails</p>
+                    <p style="margin:5px 0 0;color:#ffe7ed;font-size:13px;letter-spacing:2px;">A LITTLE MOMENT FOR YOU</p>
+                </td></tr>
+                <tr><td style="padding:30px;">
+                    <p style="margin:0 0 8px;color:#ad2856;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Booking update</p>
+                    <h1 style="margin:0 0 16px;color:#40202b;font-family:Georgia,serif;font-size:28px;line-height:1.25;">${escapeHtml(heading)}</h1>
+                    <p style="margin:0 0 20px;">Hi ${escapeHtml(name)},</p>
+                    <p style="margin:0 0 18px;">${accepted ? 'We’re happy to let you know we can welcome you for your appointment.' : 'Thank you for choosing PinkieBabe Nails.'}</p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8e6eb;border-left:4px solid #ad2856;">
+                        <tr><td style="padding:14px 18px;">
+                            <p style="margin:0 0 5px;"><strong>Service:</strong> ${escapeHtml(service)}</p>
+                            <p style="margin:0;"><strong>Date and time:</strong> ${escapeHtml(when)}</p>
+                        </td></tr>
+                    </table>
+                    ${nextSteps}
+                </td></tr>
+                <tr><td style="border-top:1px solid #ecc5d1;padding:18px 30px;color:#76515f;font-size:13px;text-align:center;">
+                    PinkieBabe Nails · We look forward to hearing from you.
+                </td></tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>`;
+}
+
 function isAcceptedBookingConflict(error) {
     const constraint = (error.original && error.original.constraint)
         || (error.parent && error.parent.constraint);
@@ -46,6 +113,7 @@ async function sendBookingDecisionEmail(booking, user) {
     const when = formatBookingTime(booking.startsAt);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const policiesUrl = new URL('/contact.html#downpayment-policies', frontendUrl).toString();
+    const bookUrl = new URL('/book.html', frontendUrl).toString();
 
     const acceptedText = [
         `Hi ${user.name},`,
@@ -58,12 +126,12 @@ async function sendBookingDecisionEmail(booking, user) {
         'Facebook: https://www.facebook.com/pinkiebabe1202',
         'Instagram: https://www.instagram.com/pinkiebabe3/',
         '',
-        'The Downpayment & appointment policies say:',
+        'Downpayment & appointment policies:',
         'Soft gel extensions: ₱300.',
         'Gel manicure: ₱200.',
-        '“The downpayment is deducted from your total and is non-refundable.”',
-        '“Pay through the GCash account provided by the owner, then send a screenshot of your proof of payment.”',
-        '“No downpayment, no secured slot. Wait for confirmation that your payment and appointment slot are confirmed.”',
+        'The downpayment is deducted from your total and is non-refundable.',
+        'Pay through the GCash account provided by the owner, then send a screenshot of your proof of payment.',
+        'No downpayment, no secured slot. Wait for confirmation that your payment and appointment slot are confirmed.',
         '',
         `Read the full policies: ${policiesUrl}`,
         '',
@@ -84,6 +152,14 @@ async function sendBookingDecisionEmail(booking, user) {
             ? 'Your PinkieBabe Nails booking is accepted'
             : 'Update on your PinkieBabe Nails booking request',
         text: booking.status === 'accepted' ? acceptedText : declinedText,
+        html: bookingDecisionEmailHtml({
+            name: user.name,
+            service: booking.service,
+            when,
+            accepted: booking.status === 'accepted',
+            policiesUrl,
+            bookUrl,
+        }),
     });
 }
 

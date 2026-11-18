@@ -40,6 +40,13 @@ const recoveryLimiter = rateLimit({
     legacyHeaders: false,
     message: { errors: ['Too many password recovery attempts. Please try again later.'] },
 });
+const deleteAccountLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 3,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { errors: ['Too many account deletion attempts. Please try again later.'] },
+});
 
 router.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
@@ -254,6 +261,47 @@ router.post(
             return res.json({ message: 'Your password has been changed.' });
         } catch (error) {
             console.error('Changing account password failed:', error.message);
+            return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
+        }
+    }
+);
+
+router.delete(
+    '/me',
+    requireAuth,
+    deleteAccountLimiter,
+    body('currentPassword')
+        .isString()
+        .withMessage('Please enter your password.')
+        .bail()
+        .isLength({ min: 1, max: 72 })
+        .withMessage('Your password must be 72 characters or fewer.')
+        .bail()
+        .custom((password) => Buffer.byteLength(password, 'utf8') <= 72)
+        .withMessage('Your password must be 72 bytes or fewer.'),
+    async (req, res) => {
+        if (validationErrors(req, res)) return;
+
+        try {
+            const user = await db.User.findByPk(req.user.id);
+            if (!user) {
+                clearAuthCookie(res);
+                return res.status(401).json({ errors: ['Please log in.'] });
+            }
+            if (user.role !== 'customer') {
+                return res.status(403).json({ errors: ['Only customer accounts can be deleted here.'] });
+            }
+
+            const passwordMatches = await bcrypt.compare(req.body.currentPassword, user.passwordHash);
+            if (!passwordMatches) {
+                return res.status(400).json({ errors: ['Your password is incorrect.'] });
+            }
+
+            await user.destroy();
+            clearAuthCookie(res);
+            return res.json({ message: 'Your account and booking history have been deleted.' });
+        } catch (error) {
+            console.error('Deleting account failed:', error.message);
             return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
         }
     }

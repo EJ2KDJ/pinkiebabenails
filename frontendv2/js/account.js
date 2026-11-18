@@ -3,6 +3,8 @@ const accountForm = document.getElementById('account-form');
 const passwordForm = document.getElementById('password-form');
 const profileStatus = document.getElementById('profile-status');
 const passwordStatus = document.getElementById('password-status');
+const deleteAccountForm = document.getElementById('delete-account-form');
+const deleteAccountStatus = document.getElementById('delete-account-status');
 
 window.addEventListener('auth:logout', () => {
     window.location.href = 'login.html';
@@ -83,6 +85,38 @@ passwordForm.addEventListener('submit', async (event) => {
     }
 });
 
+deleteAccountForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!window.confirm('Delete your account and all booking history? This cannot be undone.')) return;
+
+    const button = document.getElementById('delete-account-submit');
+    button.disabled = true;
+    showStatus(deleteAccountStatus, '', '');
+    try {
+        const response = await fetch('/api/auth/me', {
+            method: 'DELETE',
+            headers: { ...window.authSessionHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword: deleteAccountForm.elements.currentPassword.value }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            showStatus(deleteAccountStatus, (result.errors || ['Something went wrong. Please try again.']).join(' '), 'error');
+            return;
+        }
+
+        accountForm.hidden = true;
+        passwordForm.hidden = true;
+        deleteAccountForm.hidden = true;
+        accountStatus.hidden = false;
+        showStatus(accountStatus, result.message, 'success');
+    } catch (error) {
+        showStatus(deleteAccountStatus, 'Could not reach the server. Please check your connection and try again.', 'error');
+        console.error('Deleting account failed:', error);
+    } finally {
+        button.disabled = false;
+    }
+});
+
 fetch('/api/auth/me', { headers: window.authSessionHeaders() })
     .then(async (response) => {
         if (response.status === 401) {
@@ -100,6 +134,7 @@ fetch('/api/auth/me', { headers: window.authSessionHeaders() })
         document.getElementById('account-email').textContent = result.user.email;
         accountForm.hidden = false;
         passwordForm.hidden = false;
+        deleteAccountForm.hidden = result.user.role !== 'customer';
         accountStatus.hidden = true;
     })
     .catch((error) => {

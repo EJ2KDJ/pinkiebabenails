@@ -3481,3 +3481,74 @@ h3 {
         height: 44px;
     }
 }
+
+.account-delete-form {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+}
+
+.account-delete-warning {
+    padding: .8rem 1rem;
+    border-left: 4px solid #9c2434;
+    background: #f7dfe1;
+    color: #741d29;
+}
+
+.auth-card .account-delete-button {
+    border-color: #9c2434;
+    background: #9c2434;
+    color: #fff;
+}
+
+.auth-card .account-delete-button:hover {
+    border-color: #741d29;
+    background: #741d29;
+    color: #fff;
+}
+
+.booking-view-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+    margin: 1.25rem 0 .8rem;
+}
+
+.booking-view-button {
+    min-height: 54px;
+    padding: .5rem .85rem;
+    border: 2px solid var(--cherry);
+    border-radius: 0;
+    background: #fff;
+    color: var(--cherry-deep);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.booking-view-button[aria-pressed="true"] {
+    background: var(--cherry);
+    color: #fff;
+}
+
+.booking-view-button:focus-visible {
+    outline: 3px solid var(--cherry-bright);
+    outline-offset: 3px;
+}
+
+.booking-view-heading {
+    margin: .25rem 0 .75rem;
+    font-size: 1.35rem;
+}
+
+@media (max-width: 480px) {
+    .booking-view-switch {
+        gap: .5rem;
+    }
+
+    .booking-view-button {
+        padding-inline: .5rem;
+        font-size: 1.125rem;
+    }
+}

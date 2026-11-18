@@ -19,6 +19,9 @@ const bookingsPanel = document.getElementById('bookings-panel');
 const inquiriesPanel = document.getElementById('inquiries-panel');
 const bookingsList = document.getElementById('booking-list');
 const bookingsStatus = document.getElementById('bookings-status');
+const pendingBookingsButton = document.getElementById('pending-bookings-button');
+const decidedBookingsButton = document.getElementById('decided-bookings-button');
+const bookingViewHeading = document.getElementById('booking-view-heading');
 const openHourSelect = document.getElementById('setting-open-hour');
 const closeHourSelect = document.getElementById('setting-close-hour');
 const daysOffCalendar = document.getElementById('days-off-calendar');
@@ -31,6 +34,7 @@ let currentFilter = 'all';
 let lastSnapshot = '';
 let bookings = [];
 let lastBookingSnapshot = '';
+let currentBookingView = 'pending';
 let daysOff = new Set();
 let calendarMonth = currentManilaMonth();
 
@@ -301,18 +305,30 @@ function renderBookingCard(booking) {
 
 function renderBookings() {
     bookingsList.replaceChildren();
-    const ordered = bookings.slice().sort((first, second) => {
-        const firstPending = first.status === 'pending' ? 0 : 1;
-        const secondPending = second.status === 'pending' ? 0 : 1;
-        if (firstPending !== secondPending) return firstPending - secondPending;
-        return new Date(second.createdAt) - new Date(first.createdAt);
-    });
+    const ordered = bookings
+        .filter((booking) => currentBookingView === 'pending'
+            ? booking.status === 'pending'
+            : booking.status === 'accepted' || booking.status === 'declined')
+        .slice()
+        .sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt));
 
     if (ordered.length === 0) {
-        bookingsList.appendChild(el('p', 'empty-state', 'No booking requests yet.'));
+        const message = currentBookingView === 'pending'
+            ? 'No pending booking requests.'
+            : 'No accepted or declined bookings yet.';
+        bookingsList.appendChild(el('p', 'empty-state', message));
         return;
     }
     ordered.forEach((booking) => bookingsList.appendChild(renderBookingCard(booking)));
+}
+
+function selectBookingView(view) {
+    currentBookingView = view;
+    const showPending = view === 'pending';
+    pendingBookingsButton.setAttribute('aria-pressed', String(showPending));
+    decidedBookingsButton.setAttribute('aria-pressed', String(!showPending));
+    bookingViewHeading.textContent = showPending ? 'Pending bookings' : 'Accepted / declined bookings';
+    renderBookings();
 }
 
 async function loadBookings(showDone) {
@@ -506,6 +522,8 @@ document.querySelector('.admin-tabs').addEventListener('keydown', (event) => {
     }
 });
 document.getElementById('bookings-refresh').addEventListener('click', () => loadBookings(true));
+pendingBookingsButton.addEventListener('click', () => selectBookingView('pending'));
+decidedBookingsButton.addEventListener('click', () => selectBookingView('decided'));
 document.getElementById('settings-save').addEventListener('click', saveSettings);
 document.getElementById('calendar-previous').addEventListener('click', () => {
     calendarMonth = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1));

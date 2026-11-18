@@ -55,6 +55,11 @@
                 </div>
                 <button class="button button-outline admin-refresh" id="bookings-refresh" type="button">Refresh</button>
             </div>
+            <div class="booking-view-switch" role="group" aria-label="Booking status view">
+                <button class="booking-view-button" id="pending-bookings-button" type="button" aria-pressed="true">Pending</button>
+                <button class="booking-view-button" id="decided-bookings-button" type="button" aria-pressed="false">Accepted / declined</button>
+            </div>
+            <h2 class="booking-view-heading" id="booking-view-heading">Pending bookings</h2>
             <p class="form-status" id="bookings-status" role="status" aria-live="polite"></p>
             <div class="booking-admin-list" id="booking-list"></div>
 

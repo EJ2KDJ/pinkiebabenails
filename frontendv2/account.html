@@ -73,6 +73,17 @@
                 <p class="form-status" id="password-status" role="status" aria-live="polite"></p>
                 <button class="button" id="password-submit" type="submit">Change password</button>
             </form>
+
+            <form class="inquiry-form account-form account-delete-form" id="delete-account-form" hidden>
+                <h2>Delete account</h2>
+                <p class="account-delete-warning">This permanently deletes your account and all booking history, including accepted bookings. This cannot be undone.</p>
+                <div class="form-field">
+                    <label for="delete-account-password">Enter your password to confirm</label>
+                    <input id="delete-account-password" name="currentPassword" type="password" autocomplete="current-password" required />
+                </div>
+                <p class="form-status" id="delete-account-status" role="status" aria-live="polite"></p>
+                <button class="button account-delete-button" id="delete-account-submit" type="submit">Delete my account</button>
+            </form>
         </section>
     </main>
 
