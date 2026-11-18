@@ -26,6 +26,8 @@ app.use('/api/inquiries', require('./src/routes/inquiries'));
 app.use('/api/bookings', require('./src/routes/bookings'));
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/admin', require('./src/routes/admin'));
+app.use('/api/promos', require('./src/routes/promos'));
+app.use('/api/questions', require('./src/routes/questions'));
 
 // Export for Vercel and other hosting platforms.
 module.exports = app;
