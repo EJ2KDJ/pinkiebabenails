@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <script src="js/auth-session.js"></script>
-    <script src="js/inquiry.js" defer></script>
+    <script src="js/questions.js" defer></script>
     <script src="js/auth-nav.js" defer></script>
 </head>
 
@@ -36,84 +36,48 @@
             <a class="link" href="contact.html" aria-current="page">Contact</a>
         </nav>
     </header>
-    <!-- Sets expectations for the inquiry form and booking information below. -->
     <section class="page-header">
-        <p class="eyebrow">PinkieBabe Nails</p>
-        <h1>Booking &amp; Contact</h1>
-        <p>Send one message with the details below to check availability.</p>
+        <p class="eyebrow">We're here to help</p>
+        <h1>Contact PinkieBabe Nails</h1>
+        <p>Have a question? Send us a message, or head to Book to request an appointment.</p>
     </section>
 
     <main class="content-section contact-content">
-
-        <!-- The form collects appointment preferences and sends them to the inquiry API. -->
         <section class="inquiry-section" id="inquiry">
             <div class="section-heading">
-                <p class="eyebrow">Check availability</p>
-                <h2>Send an inquiry</h2>
+                <p class="eyebrow">Questions &amp; assistance</p>
+                <h2>Ask a question</h2>
+                <p>For appointments and available slots, please use our booking page instead.</p>
             </div>
-            <form id="inquiry-form" class="inquiry-form">
+            <form id="question-form" class="inquiry-form">
                 <div class="form-row">
                     <div class="form-field">
-                        <label for="name">Name</label>
-                        <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required />
+                        <label for="question-name">Name</label>
+                        <input id="question-name" name="name" type="text" maxlength="100" autocomplete="name" required />
                     </div>
                     <div class="form-field">
-                        <label for="phoneNumber">Phone number</label>
-                        <input id="phoneNumber" name="phoneNumber" type="tel" autocomplete="tel" required />
+                        <label for="question-email">Email</label>
+                        <input id="question-email" name="email" type="email" autocomplete="email" required />
                     </div>
                 </div>
                 <div class="form-field">
-                    <label for="email">Email</label>
-                    <input id="email" name="email" type="email" autocomplete="email" required />
+                    <label for="question-message">Your question</label>
+                    <textarea id="question-message" name="message" maxlength="2000" rows="5" placeholder="How can we help?" required></textarea>
                 </div>
-                <div class="form-row inquiry-appointment-row">
-                    <div class="form-field">
-                        <label for="service">Service</label>
-                        <select id="service" name="service" required>
-                            <option value="" selected disabled>Choose a service</option>
-                            <option>Soft gel extensions</option>
-                            <option>Gel manicure</option>
-                            <option>Manicure</option>
-                            <option>Pedicure</option>
-                            <option>Other</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label for="preferredDate">Preferred date</label>
-                        <input id="preferredDate" type="date" required />
-                    </div>
-                    <div class="form-field">
-                        <label for="preferredHour">Preferred hour</label>
-                        <select id="preferredHour" required>
-                            <option value="" selected disabled>Choose an hour</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-field">
-                    <label for="nailDesignReference">Nail design or reference (optional)</label>
-                    <textarea id="nailDesignReference" name="nailDesignReference" maxlength="1000"
-                        placeholder="Describe the design, or paste a link to a reference photo"></textarea>
-                </div>
-                <fieldset class="form-field">
-                    <legend>Gel/product removal needed?</legend>
-                    <div class="radio-options">
-                        <label><input type="radio" name="gelProductRemovalNeeded" value="yes" required /> Yes</label>
-                        <label><input type="radio" name="gelProductRemovalNeeded" value="no" /> No</label>
-                    </div>
-                </fieldset>
-                <!-- Spam trap: keep this hidden and empty -->
                 <div class="visually-hidden" aria-hidden="true">
-                    <label for="website">Leave this field empty</label>
-                    <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+                    <label for="question-website">Leave this field empty</label>
+                    <input id="question-website" name="website" type="text" tabindex="-1" autocomplete="off" />
                 </div>
-                <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-                <button class="button" type="submit">Send inquiry</button>
-
-                <p class="response-note">Your details are only used to reply to your inquiry.</p>
+                <p class="form-status" id="question-status" role="status" aria-live="polite"></p>
+                <button class="button" type="submit">Send question</button>
+                <p class="response-note">We'll use your email only to reply to your question.</p>
             </form>
+            <div class="contact-book-link">
+                <h3>Ready for your next set?</h3>
+                <p>Choose a date and submit an appointment request online.</p>
+                <a class="button button-outline" href="book.html">Book an appointment</a>
+            </div>
         </section>
-
-        <!-- Expandable policies keep payment, cancellation, and rescheduling terms available. -->
         <section class="policy-section" id="downpayment-policies">
             <div class="section-heading">
                 <p class="eyebrow">Please read before booking</p>
@@ -169,8 +133,28 @@
                 </div>
             </details>
         </section>
+        <section class="contact-location" aria-labelledby="contact-location-heading">
+            <div class="section-heading">
+                <p class="eyebrow">Find us</p>
+                <h2 id="contact-location-heading">Visit the salon</h2>
+            </div>
+            <p>Contact the salon for the exact address and directions.</p>
+            <iframe class="location-map" title="Search for PinkieBabe Nails on Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=PinkieBabe%20Nails&output=embed"></iframe>
+        </section>
+    </main>
 
     <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-column">
+                <h2>Follow PinkieBabe</h2>
+                <p><a href="https://facebook.com/pinkiebabe1202" target="_blank" rel="noopener noreferrer">Facebook</a> <span aria-hidden="true">·</span> <a href="https://instagram.com/pinkiebabe3" target="_blank" rel="noopener noreferrer">Instagram</a></p>
+            </div>
+            <div class="footer-column footer-contact">
+                <h2>Visit &amp; contact</h2>
+                <p class="footer-location">Salon location: contact us for directions</p>
+                <p><a href="mailto:pinkiebabenails@gmail.com">pinkiebabenails@gmail.com</a></p>
+            </div>
+        </div>
         <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
     </footer>
 </body>
