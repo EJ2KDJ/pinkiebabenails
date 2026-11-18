@@ -3552,3 +3552,227 @@ h3 {
         font-size: 1.125rem;
     }
 }
+
+/* Color-only theme pass: keep the current layout while strengthening contrast. */
+:root {
+    --cherry: #9f163f;
+    --cherry-bright: #c63260;
+    --blush: #fff1f4;
+    --card: #57152d;
+    --rose-surface: #6a1a38;
+    --line: rgba(255, 235, 241, 0.46);
+}
+
+select option {
+    background: #fff;
+    color: #301722;
+}
+
+.gallery-control {
+    border-color: var(--cherry);
+    color: #301722;
+}
+
+.gallery-control:focus-visible,
+.gallery-dot:focus-visible {
+    outline-color: var(--blush);
+}
+
+.gallery-dot::before {
+    border-color: var(--blush);
+}
+
+.gallery-dot[aria-current="true"] {
+    background: rgba(255, 241, 244, 0.14);
+}
+
+.gallery-dot[aria-current="true"]::before {
+    border-color: var(--blush);
+    background: var(--cherry-bright);
+}
+
+.admin-header .admin-title,
+.admin-loading,
+.admin-toolbar h1,
+.admin-main .booking-view-heading {
+    color: var(--blush);
+}
+
+.admin-tabs {
+    background: #35101f;
+}
+
+.admin-tab {
+    border-color: #e7a0b3;
+    background: #481329;
+    color: #fff7f9;
+}
+
+.admin-tab[aria-selected="true"] {
+    border-color: #f2a5b9;
+    background: #f2a5b9;
+    color: #38101f;
+}
+
+.booking-view-button {
+    border-color: var(--cherry);
+    background: #fff9f7;
+    color: #64142f;
+}
+
+.booking-view-button[aria-pressed="true"] {
+    border-color: var(--cherry);
+    background: var(--cherry);
+    color: #fff;
+}
+
+.admin-main .booking-admin-card,
+.admin-main .settings-card,
+.admin-main .inquiry-card {
+    border-color: #d6a6b4;
+    background: #fff9f7;
+    color: #301722;
+}
+
+.admin-main .booking-admin-details dt,
+.admin-main .days-off-heading p,
+.admin-main .days-off-summary,
+.admin-main .settings-card .section-heading p:not(.eyebrow) {
+    color: #634351;
+}
+
+.admin-main .settings-card .eyebrow,
+.admin-main .days-off-heading h3 {
+    color: var(--cherry);
+}
+
+.admin-main .form-field label,
+.admin-main .form-field legend,
+.admin-main .calendar-weekday {
+    color: #542739;
+}
+
+.admin-main .settings-card .days-off-section,
+.admin-main .booking-admin-actions,
+.admin-main .inquiry-card .status-actions {
+    border-color: #d6a6b4;
+}
+
+.admin-main .calendar-nav,
+.admin-main .calendar-day {
+    border-color: #a94362;
+    background: #fff;
+    color: #3a1724;
+}
+
+.admin-main .calendar-nav:hover,
+.admin-main .calendar-day:hover {
+    border-color: var(--cherry);
+    background: var(--cherry);
+    color: #fff;
+}
+
+.admin-main .calendar-day.is-day-off {
+    border-color: #761332;
+    background: #761332;
+    color: #fff;
+}
+
+.admin-main .settings-save {
+    border-color: var(--cherry-bright);
+    background: var(--cherry-bright);
+    color: #fff;
+}
+
+.admin-main .settings-save:hover:not(:disabled) {
+    border-color: var(--cherry);
+    background: var(--cherry);
+    color: #fff;
+}
+
+.admin-main .settings-card .form-status.error,
+.admin-main .settings-card .form-status.is-error,
+.admin-main .settings-card .form-status[data-state="error"] {
+    color: #971b39;
+}
+
+.admin-main .settings-card .form-status.success,
+.admin-main .settings-card .form-status.is-success,
+.admin-main .settings-card .form-status[data-state="success"] {
+    color: #175c35;
+}
+
+.admin-main .inquiry-search-controls {
+    border-color: #d6a6b4;
+    background: #fff9f7;
+}
+
+.admin-main .inquiry-search-controls input,
+.admin-main .inquiry-search-controls select {
+    border-color: #a94362;
+    background: #fff;
+    color: #301722;
+}
+
+.admin-main .inquiry-search-controls select option {
+    background: #fff;
+    color: #301722;
+}
+
+.admin-main .filter-clear {
+    border-color: var(--cherry);
+    background: #fff;
+    color: var(--cherry);
+}
+
+.admin-main .filter-clear:hover {
+    border-color: var(--cherry);
+    background: var(--cherry);
+    color: #fff;
+}
+
+.admin-main .admin-refresh {
+    border-color: #e7a0b3;
+    background: transparent;
+    color: #fff;
+}
+
+.admin-main .admin-refresh:hover {
+    border-color: var(--cherry-bright);
+    background: var(--cherry-bright);
+    color: #fff;
+}
+
+.admin-login-page .auth-card {
+    border-color: #d6a6b4;
+    background: #fff9f7;
+    color: #301722;
+}
+
+.admin-login-page .auth-card h1,
+.admin-login-page .auth-card .form-field label {
+    color: #542739;
+}
+
+.admin-login-page .auth-card .auth-back-link,
+.admin-login-page .auth-card .password-toggle {
+    color: var(--cherry);
+}
+
+.admin-login-page .auth-card .button {
+    border-color: var(--cherry-bright);
+    background: var(--cherry-bright);
+    color: #fff;
+}
+
+.admin-login-page .auth-card .button:hover {
+    border-color: var(--cherry);
+    background: var(--cherry);
+    color: #fff;
+}
+
+.admin-login-page .auth-card .form-status.error,
+.admin-login-page .auth-card .form-status.is-error,
+.admin-login-page .auth-card .form-status[data-state="error"] {
+    color: #971b39;
+}
