@@ -468,43 +468,6 @@ a:focus-visible {
   margin: 0;
 }
 
-
-
-
-
-
-
-.gallery-slide.is-active {
-  visibility: visible;
-  opacity: 1;
-  transition: opacity 380ms ease;
-}
-
-
-
-
-
-
-
-
-
-.gallery-control:focus-visible,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .contact-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
@@ -2427,32 +2390,6 @@ textarea:focus-visible {
     border: 1px solid rgba(255, 255, 255, .3);
 }
 
-
-
-
-
-.gallery-slide.is-active,
-
-
-
-
-
-
-
-
-.gallery-control:hover,
-
-
-
-
-
-
-
-
-
-
-
-
 .site-header {
     min-height: 92px;
     border-bottom: 1px solid rgba(255, 255, 255, .18);
@@ -3282,14 +3219,6 @@ h3 {
     -webkit-box-shadow: 0 0 0 1000px #fff inset;
 }
 
-
-
-
-
-
-
-
-
 @media (max-width: 480px) {
     
 
@@ -3381,17 +3310,6 @@ select option {
     background: #fff;
     color: #301722;
 }
-
-
-
-.gallery-control:focus-visible,
-
-
-
-
-
-
-
 
 .admin-header .admin-title,
 .admin-loading,
