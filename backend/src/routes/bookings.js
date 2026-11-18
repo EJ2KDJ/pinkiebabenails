@@ -32,6 +32,23 @@ const bookingLimiter = rateLimit({
     message: { errors: ['Too many booking requests. Please try again later.'] },
 });
 
+async function requireCustomer(req, res, next) {
+    try {
+        const user = await db.User.findByPk(req.user.id);
+        if (!user) {
+            return res.status(401).json({ errors: ['Please log in.'] });
+        }
+        if (user.role !== 'customer') {
+            return res.status(403).json({ errors: ['Only customer accounts can manage bookings.'] });
+        }
+        req.bookingUser = user;
+        return next();
+    } catch (error) {
+        console.error('Booking account check failed:', error.message);
+        return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
+    }
+}
+
 router.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
@@ -162,6 +179,7 @@ router.get(
 router.post(
     '/',
     requireAuth,
+    requireCustomer,
     bookingLimiter,
     body('date')
         .custom(isValidBookingDate)
@@ -171,7 +189,7 @@ router.post(
         .withMessage('Choose an appointment time on the hour.'),
     body('service').isIn(SERVICES).withMessage('Please choose a service.'),
     body('nailDesignReference')
-        .optional({ values: 'falsy' })
+        .optional({ values: 'null' })
         .isString()
         .withMessage('Enter design notes as text.')
         .bail()
@@ -189,52 +207,64 @@ router.post(
         }
 
         try {
-            const settings = await db.Settings.findByPk(1);
-            if (!settings) {
-                console.error('Salon settings row is missing.');
-                return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
-            }
-
             const hour = Number(req.body.time.slice(0, 2));
             const startsAt = manilaTimeToUtc(req.body.date, hour);
-            if (hour < settings.openHour || hour >= settings.closeHour) {
-                return res.status(400).json({ errors: ['That time is outside opening hours.'] });
-            }
-            if (settings.daysOff.includes(req.body.date)) {
-                return res.status(400).json({ errors: ['The salon is closed on that date.'] });
-            }
             if (startsAt.getTime() <= Date.now()) {
                 return res.status(400).json({ errors: ['Choose an appointment time in the future.'] });
             }
 
-            const acceptedBooking = await db.Booking.findOne({
-                where: { startsAt, status: 'accepted' },
+            // Serialize new requests with owner acceptance so an in-flight acceptance cannot race this check.
+            const result = await db.sequelize.transaction(async (transaction) => {
+                const settings = await db.Settings.findByPk(1, {
+                    transaction,
+                    lock: transaction.LOCK.UPDATE,
+                });
+                if (!settings) return { error: 'settings_missing' };
+                if (hour < settings.openHour || hour >= settings.closeHour) {
+                    return { error: 'outside_hours' };
+                }
+                if (settings.daysOff.includes(req.body.date)) {
+                    return { error: 'day_off' };
+                }
+
+                const acceptedBooking = await db.Booking.findOne({
+                    where: { startsAt, status: 'accepted' },
+                    transaction,
+                });
+                if (acceptedBooking) return { error: 'time_taken' };
+
+                const booking = await db.Booking.create({
+                    userId: req.bookingUser.id,
+                    service: req.body.service,
+                    startsAt,
+                    nailDesignReference: req.body.nailDesignReference || null,
+                    gelProductRemovalNeeded: req.body.gelProductRemovalNeeded,
+                    status: 'pending',
+                }, { transaction });
+                return { booking };
             });
-            if (acceptedBooking) {
+
+            if (result.error === 'settings_missing') {
+                console.error('Salon settings row is missing.');
+                return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
+            }
+            if (result.error === 'outside_hours') {
+                return res.status(400).json({ errors: ['That time is outside opening hours.'] });
+            }
+            if (result.error === 'day_off') {
+                return res.status(400).json({ errors: ['The salon is closed on that date.'] });
+            }
+            if (result.error === 'time_taken') {
                 return res.status(409).json({ errors: ['That time is no longer available.'] });
             }
 
-            const user = await db.User.findByPk(req.user.id);
-            if (!user) {
-                return res.status(401).json({ errors: ['Please log in.'] });
-            }
-
-            const booking = await db.Booking.create({
-                userId: user.id,
-                service: req.body.service,
-                startsAt,
-                nailDesignReference: req.body.nailDesignReference || null,
-                gelProductRemovalNeeded: req.body.gelProductRemovalNeeded,
-                status: 'pending',
-            });
-
             try {
-                await sendOwnerEmail(booking, user);
+                await sendOwnerEmail(result.booking, req.bookingUser);
             } catch (mailError) {
                 console.error('New booking email failed:', mailError.message);
             }
 
-            return res.status(201).json({ message: 'Booking request sent.', booking });
+            return res.status(201).json({ message: 'Booking request sent.', booking: result.booking });
         } catch (error) {
             console.error('Creating booking failed:', error.message);
             return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
@@ -242,10 +272,10 @@ router.post(
     }
 );
 
-router.get('/mine', requireAuth, async (req, res) => {
+router.get('/mine', requireAuth, requireCustomer, async (req, res) => {
     try {
         const bookings = await db.Booking.findAll({
-            where: { userId: req.user.id },
+            where: { userId: req.bookingUser.id },
             order: [['createdAt', 'DESC']],
         });
         return res.json({ bookings });

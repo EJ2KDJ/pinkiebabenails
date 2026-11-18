@@ -128,6 +128,14 @@ router.patch(
         try {
             // The row lock serializes changes to this request; the unique index covers other requests for the same hour.
             const result = await db.sequelize.transaction(async (transaction) => {
+                if (req.body.status === 'accepted') {
+                    const settings = await db.Settings.findByPk(1, {
+                        transaction,
+                        lock: transaction.LOCK.UPDATE,
+                    });
+                    if (!settings) return { error: 'settings_missing' };
+                }
+
                 const booking = await db.Booking.findByPk(req.params.id, {
                     transaction,
                     lock: transaction.LOCK.UPDATE,
@@ -167,6 +175,10 @@ router.patch(
             }
             if (result.error === 'time_taken') {
                 return res.status(409).json({ errors: ['You already accepted another booking for this time.'] });
+            }
+            if (result.error === 'settings_missing') {
+                console.error('Salon settings row is missing.');
+                return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
             }
 
             // Email is sent after the status commits, so delivery trouble cannot undo the decision.

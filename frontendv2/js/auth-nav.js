@@ -13,7 +13,7 @@ if (siteNav) {
     authStatus.hidden = true;
     authActions.appendChild(authStatus);
 
-    const mobileMenu = window.matchMedia('(max-width: 640px)');
+    const mobileMenu = window.matchMedia('(max-width: 820px)');
     function placeAuthActions() {
         const parent = mobileMenu.matches ? siteNav : siteNav.parentElement;
         if (authActions.parentElement !== parent) parent.appendChild(authActions);
@@ -44,6 +44,7 @@ if (siteNav) {
         if (user.role === 'admin') {
             const dashboardLink = document.createElement('a');
             dashboardLink.href = 'admin.html';
+            dashboardLink.className = 'link';
             dashboardLink.textContent = 'Dashboard';
             dashboardLink.dataset.authGenerated = '';
             if (window.location.pathname.endsWith('/admin.html')) {
@@ -53,6 +54,7 @@ if (siteNav) {
         }
         const accountLink = document.createElement('a');
         accountLink.href = 'account.html';
+        accountLink.className = 'link';
         accountLink.textContent = 'My Account';
         accountLink.dataset.authGenerated = '';
         if (window.location.pathname.endsWith('/account.html')) {

@@ -3,15 +3,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#fff4f6" />
-    <title>Services &amp; Pricing | PinkieBabe Nails</title>
+    <meta name="theme-color" content="#2a0a12" />
+    <title>Services | PinkieBabe Nails</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <script src="js/auth-session.js"></script>
-    <script src="js/slideshow.js" defer></script>
     <script src="js/auth-nav.js" defer></script>
 </head>
 <body>
@@ -27,55 +26,45 @@
             <span class="visually-hidden">Toggle navigation</span>
         </label>
         <nav class="site-nav" aria-label="Main navigation">
-            <a href="index.html">Home</a>
-            <a href="about.html">About Us</a>
-            <a href="services.html" aria-current="page">Services &amp; Pricing</a>
-            <a href="book.html">Book</a>
-            <a href="contact.html">Contact</a>
+            <a class="link" href="index.html">Home</a>
+            <a class="link" href="about.html">About Us</a>
+            <a class="link" href="services.html" aria-current="page">Services</a>
+            <a class="link" href="gallery.html">Gallery</a>
+            <a class="link book-link" href="book.html">Book</a>
+            <a class="link" href="contact.html">Contact</a>
         </nav>
     </header>
-    <!-- Introduces the service page before the gallery and service overview. -->
     <section class="page-header">
         <a class="eyebrow" href="index.html">PinkieBabe Nails</a>
-        <h1>Services &amp; Nail Gallery</h1>
-        <p>Home-service treatments and a look at some of our recent nail designs.</p>
+        <h1>Our Services</h1>
+        <p>Choose a service for your next visit to PinkieBabe Nails.</p>
     </section>
 
-    <main class="content-section">
-        <!-- A concise service overview; visitors can contact the salon for availability. -->
-        <article class="feature-card service-summary">
-            <h2>Nail Care</h2>
-            <p>Manicure and pedicure services with quality polish and relaxing, attentive care. Contact us to discuss a service and availability.</p>
-        </article>
-        <!-- Accessible carousel: JavaScript updates the active slide and pagination state. -->
-        <div class="gallery-carousel" role="region" aria-roledescription="carousel" aria-label="Nail design gallery">
-            <div class="gallery" aria-live="polite">
-                <figure class="gallery-slide is-active" role="group" aria-roledescription="slide" aria-label="1 of 4">
-                    <img src="assets/nails1.jpg" alt="Red and black nail art" />
-                    <figcaption>Red and black nail art</figcaption>
-                </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="2 of 4" aria-hidden="true">
-                    <img src="assets/nails2.jpg" alt="Red and pink marbled nail art" />
-                    <figcaption>Red and pink marbled nail art</figcaption>
-                </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="3 of 4" aria-hidden="true">
-                    <img src="assets/nails3.jpg" alt="Blue chrome nail art" />
-                    <figcaption>Blue chrome nail art</figcaption>
-                </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="4 of 4" aria-hidden="true">
-                    <img src="assets/nails4.jpg" alt="Colorful chrome nail art" />
-                    <figcaption>Colorful chrome nail art</figcaption>
-                </figure>
-            </div>
-            <button class="gallery-control gallery-control-previous" type="button" aria-label="Previous nail design">&#8249;</button>
-            <button class="gallery-control gallery-control-next" type="button" aria-label="Next nail design">&#8250;</button>
-            <div class="gallery-pagination" aria-label="Choose a nail design">
-                <button class="gallery-dot" type="button" aria-label="Show nail design 1" aria-current="true"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 2" aria-current="false"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 3" aria-current="false"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 4" aria-current="false"></button>
-            </div>
+    <main class="content-section services-content">
+        <p class="services-intro">Explore our nail services and choose the one that suits your visit. Select “Other” when booking to ask about a different service.</p>
+        <div class="service-list">
+            <article class="service-card">
+                <h2>Soft gel extensions</h2>
+                <p>Soft gel extensions add length and shape to your natural nails with a flexible gel finish.</p>
+            </article>
+            <article class="service-card">
+                <h2>Gel manicure</h2>
+                <p>A manicure finished with gel polish for a smooth, glossy color that lasts.</p>
+            </article>
+            <article class="service-card">
+                <h2>Manicure</h2>
+                <p>Care for your hands and natural nails, with nail shaping and a polished finish.</p>
+            </article>
+            <article class="service-card">
+                <h2>Pedicure</h2>
+                <p>Care for your feet and toenails, finished with polish of your choice.</p>
+            </article>
+            <article class="service-card">
+                <h2>Other</h2>
+                <p>Have another nail service in mind? Choose “Other” when booking and share the details in your notes.</p>
+            </article>
         </div>
+        <p class="section-action"><a class="button" href="book.html">Book an appointment</a></p>
     </main>
 
     <footer class="site-footer">
