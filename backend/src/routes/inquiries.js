@@ -27,7 +27,7 @@ const inquiryLimiter = rateLimit({
 // Validate and normalize all client-supplied values before writing to the database.
 const validateInquiry = [
     body('name').trim().notEmpty().withMessage('Please enter your name.').isLength({ max: 100 }),
-    body('email').trim().isEmail().withMessage('Please enter a valid email address.').normalizeEmail(),
+    body('email').trim().isEmail().withMessage('Please enter a valid email address.'),
     body('phoneNumber')
         .trim()
         .matches(/^[0-9+\-\s()]{7,20}$/)
