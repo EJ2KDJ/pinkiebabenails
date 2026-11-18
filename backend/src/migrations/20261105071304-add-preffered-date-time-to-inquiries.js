@@ -9,6 +9,7 @@ module.exports = {
     });
   },
 
+  async down(queryInterface) {
     // Remove the added field when rolling this migration back.
     await queryInterface.removeColumn('Inquiries', 'preferredDateTime');
   },
