@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <script src="js/auth-session.js"></script>
-    <script src="js/slideshow.js" defer></script>
     <script src="js/auth-nav.js" defer></script>
 </head>
 
@@ -43,44 +42,57 @@
         <p>A look at some of our recent nail designs.</p>
     </section>
 
-    <main class="content-section">
-        <div class="gallery-carousel" role="region" aria-roledescription="carousel" aria-label="Nail design gallery">
-            <div class="gallery" aria-live="polite">
-                <figure class="gallery-slide is-active" role="group" aria-roledescription="slide"
-                    aria-label="1 of 4">
-                    <img src="assets/nails1.jpg" alt="Red and black nail art" />
-                    <figcaption>Red and black nail art</figcaption>
-                </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="2 of 4"
-                    aria-hidden="true">
-                    <img src="assets/nails2.jpg" alt="Red and pink marbled nail art" />
-                    <figcaption>Red and pink marbled nail art</figcaption>
-                </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="3 of 4"
-                    aria-hidden="true">
-                    <img src="assets/nails3.jpg" alt="Blue chrome nail art" />
-                    <figcaption>Blue chrome nail art</figcaption>
-                </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="4 of 4"
-                    aria-hidden="true">
-                    <img src="assets/nails4.jpg" alt="Colorful chrome nail art" />
-                    <figcaption>Colorful chrome nail art</figcaption>
-                </figure>
-            </div>
-            <button class="gallery-control gallery-control-previous" type="button"
-                aria-label="Previous nail design">&#8249;</button>
-            <button class="gallery-control gallery-control-next" type="button"
-                aria-label="Next nail design">&#8250;</button>
-            <div class="gallery-pagination" aria-label="Choose a nail design">
-                <button class="gallery-dot" type="button" aria-label="Show nail design 1" aria-current="true"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 2" aria-current="false"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 3" aria-current="false"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 4" aria-current="false"></button>
-            </div>
-        </div>
+    <main class="content-section gallery-looks" aria-label="Nail design inspirations">
+            <article class="gallery-look">
+                <img src="assets/nails1.jpg" alt="Red and black nail art" loading="lazy" />
+                <div class="gallery-look-content">
+                    <p class="eyebrow">Look 01</p>
+                    <h2>Red & black statement nails</h2>
+                    <p>A bold pairing of deep red and black makes this design stand out. A great choice if you want a striking finish with plenty of personality.</p>
+                    <a class="button" href="book.html">Book this look</a>
+                </div>
+            </article>
+            <article class="gallery-look gallery-look-reverse">
+                <img src="assets/nails2.jpg" alt="Red and pink marbled nail art" loading="lazy" />
+                <div class="gallery-look-content">
+                    <p class="eyebrow">Look 02</p>
+                    <h2>Soft marbled accents</h2>
+                    <p>Delicate red and pink swirls bring a softer, playful touch to this look. The marbled finish adds texture and visual interest without feeling too busy.</p>
+                    <a class="button" href="book.html">Book this look</a>
+                </div>
+            </article>
+            <article class="gallery-look">
+                <img src="assets/nails3.jpg" alt="Blue chrome nail art" loading="lazy" />
+                <div class="gallery-look-content">
+                    <p class="eyebrow">Look 03</p>
+                    <h2>Blue chrome finish</h2>
+                    <p>Cool blue tones meet a reflective chrome finish for a sleek look. This design catches the light beautifully and works well for a modern statement.</p>
+                    <a class="button" href="book.html">Book this look</a>
+                </div>
+            </article>
+            <article class="gallery-look gallery-look-reverse">
+                <img src="assets/nails4.jpg" alt="Colorful chrome nail art" loading="lazy" />
+                <div class="gallery-look-content">
+                    <p class="eyebrow">Look 04</p>
+                    <h2>Colorful chrome</h2>
+                    <p>A mix of vibrant shades gives this chrome design a lively finish. Pick this look when you want something cheerful, colorful, and eye-catching.</p>
+                    <a class="button" href="book.html">Book this look</a>
+                </div>
+            </article>
     </main>
 
     <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-column">
+                <h2>Follow PinkieBabe</h2>
+                <p><a href="https://facebook.com/pinkiebabe1202" target="_blank" rel="noopener noreferrer">Facebook</a> <span aria-hidden="true">·</span> <a href="https://instagram.com/pinkiebabe3" target="_blank" rel="noopener noreferrer">Instagram</a></p>
+            </div>
+            <div class="footer-column footer-contact">
+                <h2>Visit &amp; contact</h2>
+                <p class="footer-location">Salon location: contact us for directions</p>
+                <p><a href="mailto:pinkiebabenails@gmail.com">pinkiebabenails@gmail.com</a></p>
+            </div>
+        </div>
         <p class="copyright">&copy; 2026 PinkieBabe Nails</p>
     </footer>
 </body>
