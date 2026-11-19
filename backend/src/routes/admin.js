@@ -6,6 +6,9 @@ const { requireAdmin } = require('../../middleware/auth');
 const nodemailer = require('nodemailer');
 const createBrandedEmail = require('../utils/branded-email');
 const {
+    getBookingScheduleError,
+    manilaDateKey,
+    pruneExpiredAvailabilityDates,
     validateAvailabilitySettings,
 } = require('../utils/booking-availability');
 
@@ -198,8 +201,9 @@ router.patch(
         try {
             // The settings row lock serializes approvals with new requests and schedule changes.
             const result = await db.sequelize.transaction(async (transaction) => {
+                let settings;
                 if (req.body.status === 'accepted') {
-                    const settings = await db.Settings.findByPk(1, {
+                    settings = await db.Settings.findByPk(1, {
                         transaction,
                         lock: transaction.LOCK.UPDATE,
                     });
@@ -214,6 +218,9 @@ router.patch(
                 if (booking.status !== 'pending') return { error: 'not_pending' };
 
                 if (req.body.status === 'accepted') {
+                    const scheduleError = getBookingScheduleError(settings, booking);
+                    if (scheduleError) return { error: scheduleError };
+
                     const existing = await db.Booking.findAll({
                         where: {
                             status: 'accepted',
@@ -257,6 +264,12 @@ router.patch(
             }
             if (result.error === 'time_taken') {
                 return res.status(409).json({ errors: ['This appointment overlaps another accepted booking.'] });
+            }
+            if (result.error === 'day_off') {
+                return res.status(409).json({ errors: ['This appointment date is now marked as a day off.'] });
+            }
+            if (result.error === 'slot_unavailable') {
+                return res.status(409).json({ errors: ['This appointment slot is no longer available in the current schedule.'] });
             }
             if (result.error === 'settings_missing') {
                 console.error('Salon settings row is missing.');
@@ -335,15 +348,16 @@ router.put(
                     lock: transaction.LOCK.UPDATE,
                 });
                 if (!settings) return { error: 'settings_missing' };
-                const updatedSettings = {
+                const today = manilaDateKey(new Date());
+                const updatedSettings = pruneExpiredAvailabilityDates({
                     openHour: req.body.openHour,
                     closeHour: req.body.closeHour,
                     daysOff: req.body.daysOff,
                     customSlotsByDate: req.body.customSlotsByDate === undefined
                         ? settings.customSlotsByDate
                         : req.body.customSlotsByDate,
-                };
-                const validationMessage = validateAvailabilitySettings(updatedSettings);
+                }, today);
+                const validationMessage = validateAvailabilitySettings(updatedSettings, today);
                 if (validationMessage) return { error: validationMessage };
 
                 await settings.update(updatedSettings, { transaction });

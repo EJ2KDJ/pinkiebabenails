@@ -4,10 +4,12 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+    getBookingScheduleError,
     getAvailabilitySlots,
     getIntervalsForDate,
     isWithinBookingWindow,
     makeInterval,
+    pruneExpiredAvailabilityDates,
     validateAvailabilitySettings,
 } = require('./booking-availability');
 
@@ -44,6 +46,53 @@ test('late-night slots end on the following Manila date', () => {
     assert.equal(slot.endsNextDay, true);
     assert.equal(slot.localEndTime, '02:00');
     assert.equal(slot.endsAt.toISOString(), '2026-11-19T18:00:00.000Z');
+});
+
+test('booking approval requires the original slot to remain scheduled and not be a day off', () => {
+    const slot = makeInterval(TODAY, '10:00', '11:00');
+    const booking = { startsAt: slot.startsAt, endsAt: slot.endsAt };
+    const settings = {
+        openHour: 10,
+        closeHour: 12,
+        daysOff: [],
+        customSlotsByDate: {},
+    };
+
+    assert.equal(getBookingScheduleError(settings, booking), '');
+    assert.equal(getBookingScheduleError({
+        ...settings,
+        closeHour: 10,
+    }, booking), 'slot_unavailable');
+    assert.equal(getBookingScheduleError({
+        ...settings,
+        customSlotsByDate: {
+            [TODAY]: [{ startTime: '10:00', endTime: '10:30' }],
+        },
+    }, booking), 'slot_unavailable');
+    assert.equal(getBookingScheduleError({
+        ...settings,
+        daysOff: [TODAY],
+    }, booking), 'day_off');
+});
+
+test('expired availability dates are pruned without changing current or future dates', () => {
+    const settings = {
+        daysOff: ['2026-11-18', TODAY, '2026-11-20'],
+        customSlotsByDate: {
+            '2026-11-18': [],
+            [TODAY]: [{ startTime: '10:00', endTime: '11:00' }],
+            '2026-11-20': [{ startTime: '11:00', endTime: '12:00' }],
+        },
+    };
+
+    assert.deepEqual(pruneExpiredAvailabilityDates(settings, TODAY), {
+        daysOff: [TODAY, '2026-11-20'],
+        customSlotsByDate: {
+            [TODAY]: [{ startTime: '10:00', endTime: '11:00' }],
+            '2026-11-20': [{ startTime: '11:00', endTime: '12:00' }],
+        },
+    });
+    assert.deepEqual(settings.daysOff, ['2026-11-18', TODAY, '2026-11-20']);
 });
 
 test('empty custom slots close a date and accepted overlaps are unavailable', () => {

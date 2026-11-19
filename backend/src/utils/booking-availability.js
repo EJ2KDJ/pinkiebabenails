@@ -15,6 +15,23 @@ function manilaDateKey(date) {
     return `${values.year}-${values.month}-${values.day}`;
 }
 
+function getBookingScheduleError(settings, booking) {
+    const startsAt = new Date(booking.startsAt);
+    const endsAt = new Date(booking.endsAt);
+    if (!Number.isFinite(startsAt.getTime()) || !Number.isFinite(endsAt.getTime())) {
+        return 'slot_unavailable';
+    }
+
+    const dateKey = manilaDateKey(startsAt);
+    if ((settings.daysOff || []).includes(dateKey)) return 'day_off';
+
+    const slotExists = getIntervalsForDate(settings, dateKey).some((slot) => (
+        slot.startsAt.getTime() === startsAt.getTime()
+        && slot.endsAt.getTime() === endsAt.getTime()
+    ));
+    return slotExists ? '' : 'slot_unavailable';
+}
+
 function addDateDays(dateKey, days) {
     return new Date(Date.parse(`${dateKey}T00:00:00.000Z`) + days * DAY_MS)
         .toISOString()
@@ -32,6 +49,24 @@ function isWithinBookingWindow(dateKey, today = manilaDateKey(new Date())) {
     const daysAhead = (Date.parse(`${dateKey}T00:00:00.000Z`)
         - Date.parse(`${today}T00:00:00.000Z`)) / DAY_MS;
     return daysAhead >= 0 && daysAhead <= 60;
+}
+
+function pruneExpiredAvailabilityDates(settings, today = manilaDateKey(new Date())) {
+    const isCurrentOrFutureDate = (date) => !isValidDateOnly(date) || date >= today;
+    return {
+        ...settings,
+        daysOff: Array.isArray(settings.daysOff)
+            ? settings.daysOff.filter(isCurrentOrFutureDate)
+            : settings.daysOff,
+        customSlotsByDate: settings.customSlotsByDate
+            && typeof settings.customSlotsByDate === 'object'
+            && !Array.isArray(settings.customSlotsByDate)
+            ? Object.fromEntries(
+                Object.entries(settings.customSlotsByDate)
+                    .filter(([date]) => isCurrentOrFutureDate(date))
+            )
+            : settings.customSlotsByDate,
+    };
 }
 
 function timeMinutes(value) {
@@ -183,12 +218,14 @@ function getAvailabilitySlots(settings, dateKey, acceptedBookings = [], now = ne
 
 module.exports = {
     addDateDays,
+    getBookingScheduleError,
     getAvailabilitySlots,
     getIntervalsForDate,
     isValidDateOnly,
     isWithinBookingWindow,
     makeInterval,
     manilaDateKey,
+    pruneExpiredAvailabilityDates,
     timeMinutes,
     validateAvailabilitySettings,
 };
