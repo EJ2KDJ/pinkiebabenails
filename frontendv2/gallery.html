@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <script src="js/auth-session.js"></script>
-    <script src="js/slideshow.js" defer></script>
     <script src="js/auth-nav.js" defer></script>
 </head>
 
@@ -43,41 +42,43 @@
         <p>A look at some of our recent nail designs.</p>
     </section>
 
-    <main class="content-section">
-        <div class="gallery-carousel" role="region" aria-roledescription="carousel" aria-label="Nail design gallery">
-            <div class="gallery" aria-live="polite">
-                <figure class="gallery-slide is-active" role="group" aria-roledescription="slide"
-                    aria-label="1 of 4">
-                    <img src="assets/nails1.jpg" alt="Red and black nail art" />
-                    <figcaption>Red and black nail art</figcaption>
+    <main class="content-section gallery-showcase">
+            <article class="showcase-item">
+                <figure class="showcase-photo">
+                    <img src="assets/nails1.jpg" alt="Brown gel pedicure with a chrome finish" loading="lazy" />
                 </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="2 of 4"
-                    aria-hidden="true">
-                    <img src="assets/nails2.jpg" alt="Red and pink marbled nail art" />
-                    <figcaption>Red and pink marbled nail art</figcaption>
+                <div class="showcase-text">
+                    <h2>Brown Gel Polish with Chrome</h2>
+                    <p>A beautiful brown gel polish that gives a warm, rich, and elegant appearance. Finished with a stunning chrome effect that adds a glossy, reflective shine, making the nails look classy and sophisticated.</p>
+                </div>
+            </article>
+            <article class="showcase-item">
+                <figure class="showcase-photo">
+                    <img src="assets/nails2.jpg" alt="Beige pedicure with a chrome finish" loading="lazy" />
                 </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="3 of 4"
-                    aria-hidden="true">
-                    <img src="assets/nails3.jpg" alt="Blue chrome nail art" />
-                    <figcaption>Blue chrome nail art</figcaption>
+                <div class="showcase-text">
+                    <h2>Beige Color with Chrome</h2>
+                    <p>A simple yet stunning beige nail color enhanced with a chrome finish. The combination creates a soft, clean, and luxurious look, perfect for those who love neutral shades with a touch of elegance and shine.</p>
+                </div>
+            </article>
+            <article class="showcase-item">
+                <figure class="showcase-photo">
+                    <img src="assets/nails3.jpg" alt="Soft gel extensions with a red marble design" loading="lazy" />
                 </figure>
-                <figure class="gallery-slide" role="group" aria-roledescription="slide" aria-label="4 of 4"
-                    aria-hidden="true">
-                    <img src="assets/nails4.jpg" alt="Colorful chrome nail art" />
-                    <figcaption>Colorful chrome nail art</figcaption>
+                <div class="showcase-text">
+                    <h2>Soft Gel Extensions with Red Marble Design</h2>
+                    <p>A gorgeous set of soft gel extensions featuring a unique red marble design. The beautiful swirls and patterns create an artistic and eye catching style, adding a bold and elegant touch to the nails.</p>
+                </div>
+            </article>
+            <article class="showcase-item">
+                <figure class="showcase-photo">
+                    <img src="assets/nails4.jpg" alt="Y2K design on short nail extensions in rainbow colors" loading="lazy" />
                 </figure>
-            </div>
-            <button class="gallery-control gallery-control-previous" type="button"
-                aria-label="Previous nail design">&#8249;</button>
-            <button class="gallery-control gallery-control-next" type="button"
-                aria-label="Next nail design">&#8250;</button>
-            <div class="gallery-pagination" aria-label="Choose a nail design">
-                <button class="gallery-dot" type="button" aria-label="Show nail design 1" aria-current="true"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 2" aria-current="false"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 3" aria-current="false"></button>
-                <button class="gallery-dot" type="button" aria-label="Show nail design 4" aria-current="false"></button>
-            </div>
-        </div>
+                <div class="showcase-text">
+                    <h2>Y2K Design on Short Nail Extensions</h2>
+                    <p>A fun and trendy Y2K inspired nail design featuring playful details and creative patterns. This style brings back the iconic early 2000s aesthetic while keeping the nails cute, fashionable, and stylish with short extensions.</p>
+                </div>
+            </article>
     </main>
 
     <footer class="site-footer">
@@ -97,9 +98,9 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
                 <span>Google Maps</span>
             </a>
-            <a class="footer-link" href="mailto:pinkiebabenails@gmail.com" aria-label="Email PinkieBabe Nails at pinkiebabenails@gmail.com">
+            <a class="footer-link" href="mailto:elainenavarroreyes@gmail.com " aria-label="Email PinkieBabe Nails at elainenavarroreyes@gmail.com">
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-                <span>pinkiebabenails@gmail.com</span>
+                <span>elainenavarroreyes@gmail.com</span>
             </a>
         </div>
     </footer>
