@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#2a0a12" />
-    <title>Contact | PinkieBabe Nails</title>
+    <title>Inquiries &amp; Policies | PinkieBabe Nails</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400&display=swap" rel="stylesheet">
@@ -33,87 +33,48 @@
             <a class="link" href="about.html">About Us</a>
             <a class="link" href="gallery.html">Gallery</a>
             <a class="link book-link" href="book.html">Book</a>
-            <a class="link" href="contact.html" aria-current="page">Contact</a>
+            <a class="link" href="contact.html" aria-current="page">Inquiries &amp; Policies</a>
         </nav>
     </header>
-    <!-- Sets expectations for the inquiry form and booking information below. -->
     <section class="page-header">
         <p class="eyebrow">PinkieBabe Nails</p>
-        <h1>Booking &amp; Contact</h1>
-        <p>Send one message with the details below to check availability.</p>
+        <h1>Inquiries &amp; Policies</h1>
+        <p>Ask a question or review our appointment policies.</p>
     </section>
 
     <main class="content-section contact-content">
-
-        <!-- The form collects appointment preferences and sends them to the inquiry API. -->
         <section class="inquiry-section" id="inquiry">
             <div class="section-heading">
-                <p class="eyebrow">Check availability</p>
-                <h2>Send an inquiry</h2>
+                <p class="eyebrow">We’re happy to help</p>
+                <h2>Ask a Question</h2>
             </div>
             <form id="inquiry-form" class="inquiry-form">
-                <div class="form-row">
-                    <div class="form-field">
-                        <label for="name">Name</label>
-                        <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required />
-                    </div>
-                    <div class="form-field">
-                        <label for="phoneNumber">Phone number</label>
-                        <input id="phoneNumber" name="phoneNumber" type="tel" autocomplete="tel" required />
-                    </div>
+                <div class="form-field">
+                    <label for="name">Name</label>
+                    <input id="name" name="name" type="text" maxlength="100" autocomplete="name" required />
                 </div>
                 <div class="form-field">
                     <label for="email">Email</label>
                     <input id="email" name="email" type="email" autocomplete="email" required />
                 </div>
-                <div class="form-row inquiry-appointment-row">
-                    <div class="form-field">
-                        <label for="service">Service</label>
-                        <select id="service" name="service" required>
-                            <option value="" selected disabled>Choose a service</option>
-                            <option>Soft gel extensions</option>
-                            <option>Gel manicure</option>
-                            <option>Manicure</option>
-                            <option>Pedicure</option>
-                            <option>Other</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label for="preferredDate">Preferred date</label>
-                        <input id="preferredDate" type="date" required />
-                    </div>
-                    <div class="form-field">
-                        <label for="preferredHour">Preferred hour</label>
-                        <select id="preferredHour" required>
-                            <option value="" selected disabled>Choose an hour</option>
-                        </select>
-                    </div>
-                </div>
                 <div class="form-field">
-                    <label for="nailDesignReference">Nail design or reference (optional)</label>
-                    <textarea id="nailDesignReference" name="nailDesignReference" maxlength="1000"
-                        placeholder="Describe the design, or paste a link to a reference photo"></textarea>
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" maxlength="5000" required
+                        placeholder="How can we help?"></textarea>
                 </div>
-                <fieldset class="form-field">
-                    <legend>Gel/product removal needed?</legend>
-                    <div class="radio-options">
-                        <label><input type="radio" name="gelProductRemovalNeeded" value="yes" required /> Yes</label>
-                        <label><input type="radio" name="gelProductRemovalNeeded" value="no" /> No</label>
-                    </div>
-                </fieldset>
-                <!-- Spam trap: keep this hidden and empty -->
                 <div class="visually-hidden" aria-hidden="true">
                     <label for="website">Leave this field empty</label>
                     <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
                 </div>
                 <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-                <button class="button" type="submit">Send inquiry</button>
-
+                <button class="button" type="submit">Send question</button>
                 <p class="response-note">Your details are only used to reply to your inquiry.</p>
             </form>
+            <div class="contact-actions">
+                <a class="button button-outline" href="book.html">Book an Appointment</a>
+            </div>
         </section>
 
-        <!-- Expandable policies keep payment, cancellation, and rescheduling terms available. -->
         <section class="policy-section" id="downpayment-policies">
             <div class="section-heading">
                 <p class="eyebrow">Please read before booking</p>

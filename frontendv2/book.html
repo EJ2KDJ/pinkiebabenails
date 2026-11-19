@@ -16,7 +16,7 @@
     <script src="js/auth-nav.js" defer></script>
 </head>
 
-<body>
+<body class="booking-page">
     <header class="site-header">
         <a class="site-brand" href="index.html" aria-label="PinkieBabe Nails home">
             <img src="assets/Logo%20Nail%20salon.jpg" alt="PinkieBabe Nails" />
@@ -33,7 +33,7 @@
             <a class="link" href="about.html">About Us</a>
             <a class="link" href="gallery.html">Gallery</a>
             <a class="link book-link" href="book.html" aria-current="page">Book</a>
-            <a class="link" href="contact.html">Contact</a>
+            <a class="link" href="contact.html">Inquiries &amp; Policies</a>
         </nav>
     </header>
 
@@ -54,54 +54,110 @@
         </section>
 
         <div id="booking-content" hidden>
-            <p class="booking-note">A request is not confirmed until the owner accepts it. Pending requests do not reserve a time.</p>
+            <div class="admin-tabs booking-tabs" role="tablist" aria-label="Customer booking sections">
+                <button class="admin-tab booking-tab" id="book-appointment-tab" type="button" role="tab"
+                    aria-controls="book-appointment-panel" aria-selected="true">Book an Appointment</button>
+                <button class="admin-tab booking-tab" id="my-bookings-tab" type="button" role="tab"
+                    aria-controls="my-bookings-panel" aria-selected="false" tabindex="-1">My Bookings</button>
+            </div>
 
-            <form class="booking-form" id="booking-form">
-                <div class="form-field">
-                    <label for="booking-date">Choose a date</label>
-                    <input id="booking-date" name="date" type="date" required />
-                </div>
+            <section class="booking-tab-panel" id="book-appointment-panel" role="tabpanel"
+                aria-labelledby="book-appointment-tab">
+                <p class="booking-note">A request is not confirmed until the owner accepts it. Pending requests do not reserve a time.</p>
 
-                <section class="booking-time-section" aria-labelledby="booking-time-heading">
-                    <h2 id="booking-time-heading">Choose an available time</h2>
-                    <p class="booking-help">Times are shown in the salon's local time.</p>
-                    <div class="booking-slot-grid" id="booking-slots"></div>
-                    <p class="form-status" id="availability-status" role="status" aria-live="polite"></p>
-                </section>
+                <form class="booking-form" id="booking-form">
+                    <input id="booking-date" name="date" type="hidden" />
 
-                <div class="form-field">
-                    <label for="booking-service">Service</label>
-                    <select id="booking-service" name="service" required>
-                        <option value="" selected disabled>Choose a service</option>
-                        <option>Soft gel extensions</option>
-                        <option>Gel manicure</option>
-                        <option>Manicure</option>
-                        <option>Pedicure</option>
-                        <option>Other</option>
-                    </select>
-                </div>
+                    <section class="booking-scheduler" aria-label="Choose an appointment date and time">
+                        <section class="booking-calendar-panel" aria-labelledby="booking-calendar-heading">
+                            <div class="booking-calendar-header">
+                                <h2 id="booking-calendar-heading">Choose a date</h2>
+                                <div class="booking-calendar-navigation">
+                                    <button class="calendar-nav" id="calendar-previous" type="button"
+                                        aria-label="Show previous month">&lsaquo;</button>
+                                    <p class="booking-calendar-month" id="calendar-month" aria-live="polite"></p>
+                                    <button class="calendar-nav" id="calendar-next" type="button"
+                                        aria-label="Show next month">&rsaquo;</button>
+                                </div>
+                            </div>
+                            <div class="booking-weekdays" aria-hidden="true">
+                                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+                                <span>Thu</span><span>Fri</span><span>Sat</span>
+                            </div>
+                            <div class="booking-calendar-grid" id="booking-calendar" role="group"
+                                aria-label="Calendar dates"></div>
+                            <p class="booking-calendar-help">Choose a date within the next 60 days.</p>
+                        </section>
 
-                <div class="form-field">
-                    <label for="booking-notes">Nail design or reference notes (optional)</label>
-                    <textarea id="booking-notes" name="nailDesignReference" maxlength="1000"
-                        placeholder="Share a design idea or a link to a reference photo."></textarea>
-                </div>
+                        <section class="booking-time-section" aria-labelledby="booking-time-heading">
+                            <h2 id="booking-time-heading">Available times</h2>
+                            <h3 class="booking-selected-date" id="selected-date-heading">Choose a date to see available times</h3>
+                            <p class="booking-help">Times are shown in the salon's local time.</p>
+                            <div class="booking-slot-grid" id="booking-slots"></div>
+                            <p class="form-status" id="availability-status" role="status" aria-live="polite"></p>
+                        </section>
+                    </section>
 
-                <div class="form-field">
-                    <label for="gel-removal">Do you need gel/product removal?</label>
-                    <select id="gel-removal" name="gelProductRemovalNeeded" required>
-                        <option value="" selected disabled>Choose Yes or No</option>
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
-                    </select>
-                </div>
+                    <section class="appointment-details" aria-labelledby="appointment-details-heading">
+                        <div class="booking-section-heading">
+                            <p class="eyebrow">The finishing touches</p>
+                            <h2 id="appointment-details-heading">Appointment Details</h2>
+                        </div>
+                        <div class="appointment-fields-grid">
+                            <div class="form-field">
+                                <label for="booking-service">Service</label>
+                                <select id="booking-service" name="service" required>
+                                    <option value="" selected disabled>Choose a service</option>
+                                    <option>Soft gel extensions</option>
+                                    <option>Gel manicure</option>
+                                    <option>Manicure</option>
+                                    <option>Pedicure</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
 
-                <p class="form-status" id="booking-status" role="status" aria-live="polite"></p>
-                <button class="button booking-submit" id="booking-submit" type="submit" disabled>Confirm request</button>
-            </form>
+                            <div class="form-field">
+                                <label for="gel-removal">Do you need gel/product removal?</label>
+                                <select id="gel-removal" name="gelProductRemovalNeeded" required>
+                                    <option value="" selected disabled>Choose Yes or No</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
 
-            <section class="customer-bookings" aria-labelledby="customer-bookings-heading">
-                <h2 id="customer-bookings-heading">My bookings</h2>
+                            <div class="form-field appointment-notes-field">
+                                <label for="booking-notes">Nail design or reference notes (optional)</label>
+                                <textarea id="booking-notes" name="nailDesignReference" maxlength="1000"
+                                    placeholder="Share a design idea or a link to a reference photo."></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="booking-summary" aria-labelledby="booking-summary-heading">
+                        <div class="booking-section-heading">
+                            <p class="eyebrow">Review your choices</p>
+                            <h2 id="booking-summary-heading">Appointment Summary</h2>
+                        </div>
+                        <dl class="booking-summary-list">
+                            <div><dt>Date</dt><dd id="summary-date">Choose a date</dd></div>
+                            <div><dt>Time</dt><dd id="summary-time">Choose a time</dd></div>
+                            <div><dt>Service</dt><dd id="summary-service">Choose a service</dd></div>
+                            <div><dt>Gel/product removal</dt><dd id="summary-removal">Choose Yes or No</dd></div>
+                        </dl>
+                        <p class="booking-summary-notice">Your appointment request must be approved by the salon owner before it is confirmed.</p>
+                    </section>
+
+                    <p class="form-status" id="booking-status" role="status" aria-live="polite"></p>
+                    <p class="booking-policy-link">Before sending your request, please read our
+                        <a href="contact.html#downpayment-policies">Downpayment &amp; Appointment Policies</a>.
+                    </p>
+                    <button class="button booking-submit" id="booking-submit" type="submit" disabled>Request Appointment</button>
+                </form>
+            </section>
+
+            <section class="booking-tab-panel customer-bookings" id="my-bookings-panel" role="tabpanel"
+                aria-labelledby="my-bookings-tab" hidden>
+                <h2 id="customer-bookings-heading">My Bookings</h2>
                 <p class="booking-help">You can check the status of your requests here.</p>
                 <div class="customer-booking-list" id="customer-booking-list"></div>
             </section>

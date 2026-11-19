@@ -5,6 +5,14 @@ const { body, query, validationResult } = require('express-validator');
 
 const db = require('../models');
 const { requireAuth } = require('../../middleware/auth');
+const createBrandedEmail = require('../utils/branded-email');
+const {
+    getAvailabilitySlots,
+    getIntervalsForDate,
+    isWithinBookingWindow,
+    makeInterval,
+    timeMinutes,
+} = require('../utils/booking-availability');
 
 const router = express.Router();
 const SERVICES = [
@@ -14,9 +22,6 @@ const SERVICES = [
     'Pedicure',
     'Other',
 ];
-const MANILA_UTC_OFFSET_HOURS = 8;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 const availabilityLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 60,
@@ -54,41 +59,28 @@ router.use((req, res, next) => {
     next();
 });
 
-function manilaDateKey(date) {
-    const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Manila',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).formatToParts(date);
-    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-    return `${values.year}-${values.month}-${values.day}`;
-}
-
-function isValidBookingDate(value) {
-    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-    const requested = new Date(`${value}T00:00:00.000Z`);
-    if (!Number.isFinite(requested.getTime()) || requested.toISOString().slice(0, 10) !== value) {
-        return false;
-    }
-
-    const today = manilaDateKey(new Date());
-    const todayUtc = Date.parse(`${today}T00:00:00.000Z`);
-    const daysAhead = (requested.getTime() - todayUtc) / DAY_MS;
-    return daysAhead >= 0 && daysAhead <= 60;
-}
-
-function manilaTimeToUtc(date, hour) {
-    const [year, month, day] = date.split('-').map(Number);
-    return new Date(Date.UTC(year, month - 1, day, hour - MANILA_UTC_OFFSET_HOURS));
-}
-
-function formatLocalDateTime(startsAt) {
-    return new Date(startsAt).toLocaleString('en-PH', {
+function formatLocalDateTime(startsAt, endsAt) {
+    const start = new Date(startsAt);
+    const date = start.toLocaleDateString('en-PH', {
         timeZone: 'Asia/Manila',
         dateStyle: 'full',
+    });
+    const startTime = start.toLocaleTimeString('en-PH', {
+        timeZone: 'Asia/Manila',
         timeStyle: 'short',
     });
+    const end = new Date(endsAt);
+    const endDate = end.toLocaleDateString('en-PH', {
+        timeZone: 'Asia/Manila',
+        dateStyle: 'full',
+    });
+    const endTime = end.toLocaleTimeString('en-PH', {
+        timeZone: 'Asia/Manila',
+        timeStyle: 'short',
+    });
+    return endDate === date
+        ? `${date}, ${startTime}–${endTime}`
+        : `${date}, ${startTime} – ${endDate}, ${endTime}`;
 }
 
 async function sendOwnerEmail(booking, user) {
@@ -103,22 +95,49 @@ async function sendOwnerEmail(booking, user) {
         port: Number(SMTP_PORT) || 587,
         auth: { user: SMTP_USER, pass: SMTP_PASS },
     });
+    const when = formatLocalDateTime(booking.startsAt, booking.endsAt);
 
-    await transporter.sendMail({
-        from: SMTP_USER,
-        to: OWNER_EMAIL,
-        replyTo: user.email,
-        subject: 'New booking request',
+    const email = createBrandedEmail({
+        title: 'New booking request',
+        previewText: `New appointment request from ${user.name}`,
+        paragraphs: ['A customer has sent a new appointment request.'],
+        sections: [
+            {
+                heading: 'Customer details',
+                items: [
+                    { label: 'Name', value: user.name },
+                    { label: 'Email', value: user.email },
+                    { label: 'Phone', value: user.phoneNumber },
+                ],
+            },
+            {
+                heading: 'Appointment details',
+                items: [
+                    { label: 'Service', value: booking.service },
+                    { label: 'Date and time', value: when },
+                    { label: 'Nail design or reference', value: booking.nailDesignReference || '(none)' },
+                    { label: 'Gel/product removal needed', value: booking.gelProductRemovalNeeded ? 'Yes' : 'No' },
+                ],
+            },
+        ],
         text: [
             'New booking request',
             `Name: ${user.name}`,
             `Email: ${user.email}`,
             `Phone: ${user.phoneNumber}`,
             `Service: ${booking.service}`,
-            `Date and time: ${formatLocalDateTime(booking.startsAt)}`,
+            `Date and time: ${when}`,
             `Nail design or reference: ${booking.nailDesignReference || '(none)'}`,
             `Gel/product removal needed: ${booking.gelProductRemovalNeeded ? 'Yes' : 'No'}`,
         ].join('\n'),
+    });
+
+    await transporter.sendMail({
+        from: SMTP_USER,
+        to: OWNER_EMAIL,
+        replyTo: user.email,
+        subject: 'New booking request',
+        ...email,
     });
 }
 
@@ -126,7 +145,7 @@ router.get(
     '/availability',
     availabilityLimiter,
     query('date')
-        .custom(isValidBookingDate)
+        .custom((value) => isWithinBookingWindow(value))
         .withMessage('Choose a valid date from today through 60 days from now.'),
     async (req, res) => {
         const errors = validationResult(req);
@@ -141,33 +160,19 @@ router.get(
                 return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
             }
 
-            const dayStart = manilaTimeToUtc(req.query.date, 0);
-            const dayEnd = new Date(dayStart.getTime() + DAY_MS);
+            const dayStart = makeInterval(req.query.date, '00:00', '00:01').startsAt;
+            const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
             const accepted = await db.Booking.findAll({
-                attributes: ['startsAt'],
+                attributes: ['startsAt', 'endsAt'],
                 where: {
                     status: 'accepted',
                     startsAt: {
-                        [db.Sequelize.Op.gte]: dayStart,
-                        [db.Sequelize.Op.lt]: dayEnd,
+                        [db.Sequelize.Op.gte]: new Date(dayStart.getTime() - 24 * 60 * 60 * 1000),
+                        [db.Sequelize.Op.lt]: new Date(dayEnd.getTime() + 24 * 60 * 60 * 1000),
                     },
                 },
             });
-            const acceptedTimes = new Set(accepted.map((booking) => new Date(booking.startsAt).getTime()));
-            const now = Date.now();
-            const isDayOff = settings.daysOff.includes(req.query.date);
-            const slots = [];
-
-            for (let hour = settings.openHour; hour < settings.closeHour; hour += 1) {
-                const startsAt = manilaTimeToUtc(req.query.date, hour);
-                slots.push({
-                    time: `${String(hour).padStart(2, '0')}:00`,
-                    available: !isDayOff
-                        && startsAt.getTime() > now
-                        && !acceptedTimes.has(startsAt.getTime()),
-                });
-            }
-
+            const slots = getAvailabilitySlots(settings, req.query.date, accepted);
             return res.json({ date: req.query.date, slots });
         } catch (error) {
             console.error('Loading booking availability failed:', error.message);
@@ -182,11 +187,11 @@ router.post(
     requireCustomer,
     bookingLimiter,
     body('date')
-        .custom(isValidBookingDate)
+        .custom((value) => isWithinBookingWindow(value))
         .withMessage('Choose a valid date from today through 60 days from now.'),
     body('time')
-        .matches(/^(?:[01]\d|2[0-3]):00$/)
-        .withMessage('Choose an appointment time on the hour.'),
+        .custom((value) => timeMinutes(value) !== null)
+        .withMessage('Choose a valid appointment time.'),
     body('service').isIn(SERVICES).withMessage('Please choose a service.'),
     body('nailDesignReference')
         .optional({ values: 'null' })
@@ -207,12 +212,6 @@ router.post(
         }
 
         try {
-            const hour = Number(req.body.time.slice(0, 2));
-            const startsAt = manilaTimeToUtc(req.body.date, hour);
-            if (startsAt.getTime() <= Date.now()) {
-                return res.status(400).json({ errors: ['Choose an appointment time in the future.'] });
-            }
-
             // Serialize new requests with owner acceptance so an in-flight acceptance cannot race this check.
             const result = await db.sequelize.transaction(async (transaction) => {
                 const settings = await db.Settings.findByPk(1, {
@@ -220,23 +219,39 @@ router.post(
                     lock: transaction.LOCK.UPDATE,
                 });
                 if (!settings) return { error: 'settings_missing' };
-                if (hour < settings.openHour || hour >= settings.closeHour) {
-                    return { error: 'outside_hours' };
-                }
                 if (settings.daysOff.includes(req.body.date)) {
                     return { error: 'day_off' };
                 }
 
-                const acceptedBooking = await db.Booking.findOne({
-                    where: { startsAt, status: 'accepted' },
+                const slot = getIntervalsForDate(settings, req.body.date)
+                    .find((item) => item.startTime === req.body.time);
+                if (!slot) return { error: 'time_taken' };
+                if (slot.startsAt.getTime() <= Date.now()) {
+                    return { error: 'past_time' };
+                }
+
+                const acceptedBookings = await db.Booking.findAll({
+                    attributes: ['startsAt', 'endsAt'],
+                    where: {
+                        status: 'accepted',
+                        startsAt: {
+                            [db.Sequelize.Op.gte]: new Date(slot.startsAt.getTime() - 24 * 60 * 60 * 1000),
+                            [db.Sequelize.Op.lt]: slot.endsAt,
+                        },
+                    },
                     transaction,
                 });
-                if (acceptedBooking) return { error: 'time_taken' };
+                const overlapsAcceptedBooking = acceptedBookings.some((booking) => (
+                    new Date(booking.startsAt) < slot.endsAt
+                    && new Date(booking.endsAt) > slot.startsAt
+                ));
+                if (overlapsAcceptedBooking) return { error: 'time_taken' };
 
                 const booking = await db.Booking.create({
                     userId: req.bookingUser.id,
                     service: req.body.service,
-                    startsAt,
+                    startsAt: slot.startsAt,
+                    endsAt: slot.endsAt,
                     nailDesignReference: req.body.nailDesignReference || null,
                     gelProductRemovalNeeded: req.body.gelProductRemovalNeeded,
                     status: 'pending',
@@ -248,11 +263,11 @@ router.post(
                 console.error('Salon settings row is missing.');
                 return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
             }
-            if (result.error === 'outside_hours') {
-                return res.status(400).json({ errors: ['That time is outside opening hours.'] });
-            }
             if (result.error === 'day_off') {
                 return res.status(400).json({ errors: ['The salon is closed on that date.'] });
+            }
+            if (result.error === 'past_time') {
+                return res.status(400).json({ errors: ['Choose an appointment time in the future.'] });
             }
             if (result.error === 'time_taken') {
                 return res.status(409).json({ errors: ['That time is no longer available.'] });
