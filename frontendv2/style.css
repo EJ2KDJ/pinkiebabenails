@@ -3890,3 +3890,47 @@ select option {
     .showcase-photo, .showcase-photo img { transition: none; }
     .showcase-photo:hover, .showcase-photo:hover img { transform: none; }
 }
+
+/* ===== Soft rounded corners for all buttons, boxes and fields ===== */
+:root {
+    --radius-field: 12px;   /* inputs, selects, textareas */
+    --radius-button: 14px;  /* buttons and clickable chips */
+    --radius-box: 22px;     /* cards, panels, forms */
+    --radius-pill: 999px;   /* status badges */
+}
+
+/* Buttons */
+.button, .book, .book-secondary-button, .auth-nav-actions .auth-nav-login,
+.auth-mode, .booking-view-button, .admin-tab, .calendar-nav, .booking-action,
+.filter-chip, .status-button, .delete-inquiry-button, .booking-slot,
+.admin-refresh, .filter-clear, .settings-save, .account-delete-button {
+    border-radius: var(--radius-button);
+}
+
+/* Inputs, dropdowns, text areas, search boxes, day cells */
+input:not([type="radio"]):not([type="checkbox"]), select, textarea,
+.form-field input:not([type="radio"]), .form-field select, .form-field textarea,
+.inquiry-search-controls input, .inquiry-search-controls select,
+.calendar-day {
+    border-radius: var(--radius-field);
+}
+
+/* Cards, panels and boxes */
+.feature-card, .service-summary, .service-card, .message-template, .policy-item,
+.auth-card, .book-login-card, .booking-note, .booking-form, .customer-booking-card,
+.settings-card, .booking-admin-card, .inquiry-card, .booking-guide, .policy-section,
+.contact-location, .inquiry-section, .booking-notice, .empty-state,
+.inquiry-search-controls, .auth-modes, .days-off-section, .admin-tabs,
+.account-password-form, .account-delete-form, .account-delete-warning,
+.service-list li, .gallery-slide img {
+    border-radius: var(--radius-box);
+}
+.location-map { border-radius: var(--radius-box); overflow: hidden; }
+
+/* Small status labels */
+.status-badge, .customer-booking-status, .booking-admin-status {
+    border-radius: var(--radius-pill);
+}
+
+/* Inner buttons sit inside rounded containers, so match the container */
+.auth-modes .auth-mode, .admin-tabs .admin-tab { border-radius: calc(var(--radius-button) - 2px); }
