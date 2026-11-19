@@ -4,6 +4,13 @@ const { body, param, query, validationResult } = require('express-validator');
 const db = require('../models');
 const { requireAdmin } = require('../../middleware/auth');
 const nodemailer = require('nodemailer');
+const createBrandedEmail = require('../utils/branded-email');
+const {
+    getBookingScheduleError,
+    manilaDateKey,
+    pruneExpiredAvailabilityDates,
+    validateAvailabilitySettings,
+} = require('../utils/booking-availability');
 
 const router = express.Router();
 
@@ -17,79 +24,28 @@ function validDateOnly(value) {
     return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-function formatBookingTime(startsAt) {
-    return new Date(startsAt).toLocaleString('en-PH', {
+function formatBookingTime(startsAt, endsAt) {
+    const start = new Date(startsAt);
+    const date = start.toLocaleDateString('en-PH', {
         timeZone: 'Asia/Manila',
         dateStyle: 'full',
+    });
+    const startTime = start.toLocaleTimeString('en-PH', {
+        timeZone: 'Asia/Manila',
         timeStyle: 'short',
     });
-}
-
-function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, (character) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-    })[character]);
-}
-
-function bookingDecisionEmailHtml({ name, service, when, accepted, policiesUrl, bookUrl }) {
-    const heading = accepted ? 'Your booking is accepted' : 'An update on your booking';
-    const nextSteps = accepted
-        ? `
-            <h2 style="margin:24px 0 8px;color:#8f2048;font-size:20px;">What happens next?</h2>
-            <p style="margin:0 0 14px;">Please message us on Facebook or Instagram to arrange your downpayment. Your appointment slot is secured only after the downpayment is confirmed.</p>
-            <ul style="padding-left:22px;margin:0 0 18px;">
-                <li style="margin-bottom:6px;">Soft gel extensions: ₱300.</li>
-                <li style="margin-bottom:6px;">Gel manicure: ₱200.</li>
-                <li style="margin-bottom:6px;">The downpayment is deducted from your total and is non-refundable.</li>
-                <li style="margin-bottom:6px;">Pay through the GCash account provided by the owner, then send a screenshot of your proof of payment.</li>
-                <li>No downpayment, no secured slot. Wait for confirmation that your payment and appointment slot are confirmed.</li>
-            </ul>
-            <p style="margin:0 0 18px;"><a href="${escapeHtml(policiesUrl)}" style="color:#8f2048;font-weight:700;">Read the Downpayment &amp; appointment policies</a></p>
-            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-                <td style="padding:0 10px 0 0;"><a href="https://www.facebook.com/pinkiebabe1202" style="display:inline-block;background:#ad2856;color:#fff;padding:11px 16px;text-decoration:none;font-weight:700;">Message on Facebook</a></td>
-                <td><a href="https://www.instagram.com/pinkiebabe3/" style="display:inline-block;background:#ad2856;color:#fff;padding:11px 16px;text-decoration:none;font-weight:700;">Message on Instagram</a></td>
-            </tr></table>`
-        : `
-            <p style="margin:18px 0;">We’re sorry, but we can’t accept this request. Please choose another available time and send us a new request. We hope to see you soon!</p>
-            <p style="margin:22px 0 0;"><a href="${escapeHtml(bookUrl)}" style="display:inline-block;background:#ad2856;color:#fff;padding:12px 20px;text-decoration:none;font-weight:700;">Choose another time</a></p>`;
-
-    return `<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#fff4f6;color:#40202b;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;">
-    <div style="display:none;max-height:0;overflow:hidden;">${escapeHtml(heading)} — PinkieBabe Nails</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff4f6;padding:28px 12px;">
-        <tr><td align="center">
-            <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#fffafb;border:1px solid #ecc5d1;">
-                <tr><td style="background:#8f2048;padding:26px 30px;text-align:center;color:#fff;">
-                    <p style="margin:0;font-family:Georgia,serif;font-size:25px;font-weight:700;letter-spacing:1px;">PinkieBabe Nails</p>
-                    <p style="margin:5px 0 0;color:#ffe7ed;font-size:13px;letter-spacing:2px;">A LITTLE MOMENT FOR YOU</p>
-                </td></tr>
-                <tr><td style="padding:30px;">
-                    <p style="margin:0 0 8px;color:#ad2856;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Booking update</p>
-                    <h1 style="margin:0 0 16px;color:#40202b;font-family:Georgia,serif;font-size:28px;line-height:1.25;">${escapeHtml(heading)}</h1>
-                    <p style="margin:0 0 20px;">Hi ${escapeHtml(name)},</p>
-                    <p style="margin:0 0 18px;">${accepted ? 'We’re happy to let you know we can welcome you for your appointment.' : 'Thank you for choosing PinkieBabe Nails.'}</p>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8e6eb;border-left:4px solid #ad2856;">
-                        <tr><td style="padding:14px 18px;">
-                            <p style="margin:0 0 5px;"><strong>Service:</strong> ${escapeHtml(service)}</p>
-                            <p style="margin:0;"><strong>Date and time:</strong> ${escapeHtml(when)}</p>
-                        </td></tr>
-                    </table>
-                    ${nextSteps}
-                </td></tr>
-                <tr><td style="border-top:1px solid #ecc5d1;padding:18px 30px;color:#76515f;font-size:13px;text-align:center;">
-                    PinkieBabe Nails · We look forward to hearing from you.
-                </td></tr>
-            </table>
-        </td></tr>
-    </table>
-</body>
-</html>`;
+    const end = new Date(endsAt);
+    const endDate = end.toLocaleDateString('en-PH', {
+        timeZone: 'Asia/Manila',
+        dateStyle: 'full',
+    });
+    const endTime = end.toLocaleTimeString('en-PH', {
+        timeZone: 'Asia/Manila',
+        timeStyle: 'short',
+    });
+    return endDate === date
+        ? `${date}, ${startTime}–${endTime}`
+        : `${date}, ${startTime} – ${endDate}, ${endTime}`;
 }
 
 function isAcceptedBookingConflict(error) {
@@ -110,7 +66,7 @@ async function sendBookingDecisionEmail(booking, user) {
         port: Number(SMTP_PORT) || 587,
         auth: { user: SMTP_USER, pass: SMTP_PASS },
     });
-    const when = formatBookingTime(booking.startsAt);
+    const when = formatBookingTime(booking.startsAt, booking.endsAt);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const policiesUrl = new URL('/contact.html#downpayment-policies', frontendUrl).toString();
     const bookUrl = new URL('/book.html', frontendUrl).toString();
@@ -143,6 +99,55 @@ async function sendBookingDecisionEmail(booking, user) {
         `We’re sorry, but we can’t accept your booking request for ${when}.`,
         'Please choose another available time and send us a new request. We hope to see you soon!',
     ].join('\n');
+    const accepted = booking.status === 'accepted';
+    const email = createBrandedEmail({
+        title: accepted ? 'Your booking is accepted' : 'An update on your booking',
+        previewText: accepted
+            ? 'Your PinkieBabe Nails booking request was accepted.'
+            : 'There is an update on your PinkieBabe Nails booking request.',
+        paragraphs: accepted
+            ? [
+                `Hi ${user.name},`,
+                'We’re happy to let you know we can welcome you for your appointment.',
+            ]
+            : [
+                `Hi ${user.name},`,
+                'Thank you for choosing PinkieBabe Nails.',
+                `We’re sorry, but we can’t accept this request. Please choose another available time and send us a new request. We hope to see you soon!`,
+            ],
+        sections: [
+            {
+                heading: 'Appointment details',
+                items: [
+                    { label: 'Service', value: booking.service },
+                    { label: 'Date and time', value: when },
+                ],
+            },
+            ...(accepted
+                ? [{
+                    heading: 'What happens next?',
+                    paragraphs: [
+                        'Please message us on Facebook or Instagram to arrange your downpayment. Your appointment slot is secured only after the downpayment is confirmed.',
+                    ],
+                    bullets: [
+                        'Soft gel extensions: ₱300.',
+                        'Gel manicure: ₱200.',
+                        'The downpayment is deducted from your total and is non-refundable.',
+                        'Pay through the GCash account provided by the owner, then send a screenshot of your proof of payment.',
+                        'No downpayment, no secured slot. Wait for confirmation that your payment and appointment slot are confirmed.',
+                    ],
+                }]
+                : []),
+        ],
+        actions: accepted
+            ? [
+                { label: 'Read the Downpayment & appointment policies', url: policiesUrl },
+                { label: 'Message on Facebook', url: 'https://www.facebook.com/pinkiebabe1202' },
+                { label: 'Message on Instagram', url: 'https://www.instagram.com/pinkiebabe3/' },
+            ]
+            : [{ label: 'Choose another time', url: bookUrl }],
+        text: accepted ? acceptedText : declinedText,
+    });
 
     await transporter.sendMail({
         from: SMTP_USER,
@@ -151,15 +156,7 @@ async function sendBookingDecisionEmail(booking, user) {
         subject: booking.status === 'accepted'
             ? 'Your PinkieBabe Nails booking is accepted'
             : 'Update on your PinkieBabe Nails booking request',
-        text: booking.status === 'accepted' ? acceptedText : declinedText,
-        html: bookingDecisionEmailHtml({
-            name: user.name,
-            service: booking.service,
-            when,
-            accepted: booking.status === 'accepted',
-            policiesUrl,
-            bookUrl,
-        }),
+        ...email,
     });
 }
 
@@ -202,10 +199,11 @@ router.patch(
         }
 
         try {
-            // The row lock serializes changes to this request; the unique index covers other requests for the same hour.
+            // The settings row lock serializes approvals with new requests and schedule changes.
             const result = await db.sequelize.transaction(async (transaction) => {
+                let settings;
                 if (req.body.status === 'accepted') {
-                    const settings = await db.Settings.findByPk(1, {
+                    settings = await db.Settings.findByPk(1, {
                         transaction,
                         lock: transaction.LOCK.UPDATE,
                     });
@@ -220,15 +218,29 @@ router.patch(
                 if (booking.status !== 'pending') return { error: 'not_pending' };
 
                 if (req.body.status === 'accepted') {
-                    const existing = await db.Booking.findOne({
+                    const scheduleError = getBookingScheduleError(settings, booking);
+                    if (scheduleError) return { error: scheduleError };
+
+                    const existing = await db.Booking.findAll({
                         where: {
-                            startsAt: booking.startsAt,
                             status: 'accepted',
+                            startsAt: {
+                                [db.Sequelize.Op.gte]: new Date(
+                                    new Date(booking.startsAt).getTime() - 24 * 60 * 60 * 1000
+                                ),
+                                [db.Sequelize.Op.lt]: booking.endsAt,
+                            },
+                            id: { [db.Sequelize.Op.ne]: booking.id },
                         },
+                        attributes: ['startsAt', 'endsAt'],
                         transaction,
                         lock: transaction.LOCK.UPDATE,
                     });
-                    if (existing) return { error: 'time_taken' };
+                    const overlaps = existing.some((acceptedBooking) => (
+                        new Date(acceptedBooking.startsAt) < new Date(booking.endsAt)
+                        && new Date(acceptedBooking.endsAt) > new Date(booking.startsAt)
+                    ));
+                    if (overlaps) return { error: 'time_taken' };
                 }
 
                 await booking.update({ status: req.body.status }, { transaction });
@@ -238,6 +250,7 @@ router.patch(
                         userId: booking.userId,
                         service: booking.service,
                         startsAt: booking.startsAt,
+                        endsAt: booking.endsAt,
                         status: booking.status,
                     },
                 };
@@ -250,7 +263,13 @@ router.patch(
                 return res.status(409).json({ errors: ['Only pending bookings can be changed.'] });
             }
             if (result.error === 'time_taken') {
-                return res.status(409).json({ errors: ['You already accepted another booking for this time.'] });
+                return res.status(409).json({ errors: ['This appointment overlaps another accepted booking.'] });
+            }
+            if (result.error === 'day_off') {
+                return res.status(409).json({ errors: ['This appointment date is now marked as a day off.'] });
+            }
+            if (result.error === 'slot_unavailable') {
+                return res.status(409).json({ errors: ['This appointment slot is no longer available in the current schedule.'] });
             }
             if (result.error === 'settings_missing') {
                 console.error('Salon settings row is missing.');
@@ -312,6 +331,10 @@ router.put(
     body('daysOff.*')
         .custom(validDateOnly)
         .withMessage('Enter each day off as a valid date.'),
+    body('customSlotsByDate')
+        .optional()
+        .custom((value) => value && typeof value === 'object' && !Array.isArray(value))
+        .withMessage('Custom availability must be a list of dates and time slots.'),
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -319,18 +342,36 @@ router.put(
         }
 
         try {
-            const settings = await db.Settings.findByPk(1);
-            if (!settings) {
+            const result = await db.sequelize.transaction(async (transaction) => {
+                const settings = await db.Settings.findByPk(1, {
+                    transaction,
+                    lock: transaction.LOCK.UPDATE,
+                });
+                if (!settings) return { error: 'settings_missing' };
+                const today = manilaDateKey(new Date());
+                const updatedSettings = pruneExpiredAvailabilityDates({
+                    openHour: req.body.openHour,
+                    closeHour: req.body.closeHour,
+                    daysOff: req.body.daysOff,
+                    customSlotsByDate: req.body.customSlotsByDate === undefined
+                        ? settings.customSlotsByDate
+                        : req.body.customSlotsByDate,
+                }, today);
+                const validationMessage = validateAvailabilitySettings(updatedSettings, today);
+                if (validationMessage) return { error: validationMessage };
+
+                await settings.update(updatedSettings, { transaction });
+                return { settings };
+            });
+
+            if (result.error === 'settings_missing') {
                 console.error('Salon settings row is missing.');
                 return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });
             }
-
-            await settings.update({
-                openHour: req.body.openHour,
-                closeHour: req.body.closeHour,
-                daysOff: req.body.daysOff,
-            });
-            return res.json({ settings });
+            if (result.error) {
+                return res.status(400).json({ errors: [result.error] });
+            }
+            return res.json({ settings: result.settings });
         } catch (error) {
             console.error('Saving settings failed:', error.message);
             return res.status(500).json({ errors: ['Something went wrong. Please try again.'] });

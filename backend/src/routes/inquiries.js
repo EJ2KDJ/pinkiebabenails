@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 
 const db = require('../models');
+const createBrandedEmail = require('../utils/branded-email');
 
 const router = express.Router();
 
@@ -28,12 +29,19 @@ const inquiryLimiter = rateLimit({
 const validateInquiry = [
     body('name').trim().notEmpty().withMessage('Please enter your name.').isLength({ max: 100 }),
     body('email').trim().isEmail().withMessage('Please enter a valid email address.'),
+    body('message')
+        .optional({ values: 'falsy' })
+        .trim()
+        .isLength({ max: 5000 })
+        .withMessage('Your message must be 5000 characters or fewer.'),
     body('phoneNumber')
+        .optional({ values: 'falsy' })
         .trim()
         .matches(/^[0-9+\-\s()]{7,20}$/)
         .withMessage('Please enter a valid phone number.'),
-    body('service').isIn(SERVICES).withMessage('Please choose a service.'),
+    body('service').optional({ values: 'falsy' }).isIn(SERVICES).withMessage('Please choose a service.'),
     body('preferredDateTime')
+        .optional({ values: 'falsy' })
         .isISO8601()
         .withMessage('Please choose a preferred date and time.')
         .bail()
@@ -49,7 +57,21 @@ const validateInquiry = [
         })
         .withMessage('Please choose an appointment time on the hour.'),
     body('nailDesignReference').optional({ values: 'falsy' }).trim().isLength({ max: 1000 }),
-    body('gelProductRemovalNeeded').isBoolean().withMessage('Please choose Yes or No.').toBoolean(),
+    body('gelProductRemovalNeeded')
+        .optional()
+        .isBoolean()
+        .withMessage('Please choose Yes or No.')
+        .toBoolean(),
+    body().custom((_, { req }) => {
+        const hasMessage = typeof req.body.message === 'string' && req.body.message.trim().length > 0;
+        const hasAppointmentDetails = Boolean(
+            req.body.phoneNumber
+            && SERVICES.includes(req.body.service)
+            && req.body.preferredDateTime
+            && typeof req.body.gelProductRemovalNeeded === 'boolean'
+        );
+        return hasMessage || hasAppointmentDetails;
+    }).withMessage('Please enter a message.'),
 ];
 
 // Notify the owner while preserving the original inquiry as the reply-to address.
@@ -66,27 +88,57 @@ async function sendOwnerEmail(inquiry) {
         auth: { user: SMTP_USER, pass: SMTP_PASS },
     });
 
-    const when = new Date(inquiry.preferredDateTime).toLocaleString('en-PH', {
-        timeZone: 'Asia/Manila',
-        dateStyle: 'full',
-        timeStyle: 'short',
+    const details = [];
+    if (inquiry.phoneNumber) details.push({ label: 'Phone', value: inquiry.phoneNumber });
+    if (inquiry.service) details.push({ label: 'Service', value: inquiry.service });
+    if (inquiry.preferredDateTime) {
+        const when = new Date(inquiry.preferredDateTime).toLocaleString('en-PH', {
+            timeZone: 'Asia/Manila',
+            dateStyle: 'full',
+            timeStyle: 'short',
+        });
+        details.push({ label: 'Preferred date and time', value: when });
+    }
+    if (inquiry.nailDesignReference) {
+        details.push({ label: 'Nail design or reference', value: inquiry.nailDesignReference });
+    }
+    if (inquiry.gelProductRemovalNeeded !== null && inquiry.gelProductRemovalNeeded !== undefined) {
+        details.push({
+            label: 'Gel/product removal needed',
+            value: inquiry.gelProductRemovalNeeded ? 'Yes' : 'No',
+        });
+    }
+
+    const message = inquiry.message || '(appointment inquiry)';
+    const email = createBrandedEmail({
+        title: 'New website inquiry',
+        previewText: `New inquiry from ${inquiry.name}`,
+        paragraphs: ['A customer has sent a message through the website.'],
+        sections: [
+            {
+                heading: 'Inquiry details',
+                items: [
+                    { label: 'Name', value: inquiry.name },
+                    { label: 'Email', value: inquiry.email },
+                    { label: 'Message', value: message },
+                ],
+            },
+            ...(details.length ? [{ heading: 'Appointment details', items: details }] : []),
+        ],
+        text: [
+            `Name: ${inquiry.name}`,
+            `Email: ${inquiry.email}`,
+            `Message: ${message}`,
+            ...details.map((detail) => `${detail.label}: ${detail.value}`),
+        ].join('\n'),
     });
 
-    // Format the requested time in the salon's local timezone for the owner.
     await transporter.sendMail({
         from: SMTP_USER,
         to: OWNER_EMAIL,
         replyTo: inquiry.email,
         subject: `New inquiry from ${inquiry.name}`,
-        text: [
-            `Name: ${inquiry.name}`,
-            `Email: ${inquiry.email}`,
-            `Phone: ${inquiry.phoneNumber}`,
-            `Service: ${inquiry.service}`,
-            `Preferred date and time: ${when}`,
-            `Nail design or reference: ${inquiry.nailDesignReference || '(none)'}`,
-            `Gel/product removal needed: ${inquiry.gelProductRemovalNeeded ? 'Yes' : 'No'}`,
-        ].join('\n'),
+        ...email,
     });
 }
 
@@ -107,11 +159,12 @@ router.post('/', inquiryLimiter, validateInquiry, async (req, res) => {
         const inquiry = await db.Inquiry.create({
             name: req.body.name,
             email: req.body.email,
-            phoneNumber: req.body.phoneNumber,
-            service: req.body.service,
-            preferredDateTime: req.body.preferredDateTime,
+            message: req.body.message || null,
+            phoneNumber: req.body.phoneNumber || null,
+            service: req.body.service || null,
+            preferredDateTime: req.body.preferredDateTime || null,
             nailDesignReference: req.body.nailDesignReference || null,
-            gelProductRemovalNeeded: req.body.gelProductRemovalNeeded,
+            gelProductRemovalNeeded: req.body.gelProductRemovalNeeded ?? null,
         });
 
         // The inquiry is already saved, so an email problem should not fail the request.

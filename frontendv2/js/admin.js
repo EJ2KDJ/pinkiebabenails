@@ -17,26 +17,67 @@ const bookingsTab = document.getElementById('bookings-tab');
 const inquiriesTab = document.getElementById('inquiries-tab');
 const bookingsPanel = document.getElementById('bookings-panel');
 const inquiriesPanel = document.getElementById('inquiries-panel');
-const bookingsList = document.getElementById('booking-list');
 const bookingsStatus = document.getElementById('bookings-status');
-const pendingBookingsButton = document.getElementById('pending-bookings-button');
-const decidedBookingsButton = document.getElementById('decided-bookings-button');
-const bookingViewHeading = document.getElementById('booking-view-heading');
+const bookingTabs = [
+    {
+        name: 'availability',
+        button: document.getElementById('availability-tab'),
+        panel: document.getElementById('availability-panel'),
+    },
+    {
+        name: 'pending',
+        button: document.getElementById('pending-bookings-tab'),
+        panel: document.getElementById('pending-bookings-panel'),
+    },
+    {
+        name: 'decided',
+        button: document.getElementById('decided-bookings-tab'),
+        panel: document.getElementById('decided-bookings-panel'),
+    },
+];
+const bookingSearch = {
+    pending: {
+        type: document.getElementById('pending-booking-filter-type'),
+        value: document.getElementById('pending-booking-filter-value'),
+        service: document.getElementById('pending-booking-service-value'),
+        resultCount: document.getElementById('pending-booking-result-count'),
+        list: document.getElementById('pending-booking-list'),
+    },
+    decided: {
+        type: document.getElementById('decided-booking-filter-type'),
+        value: document.getElementById('decided-booking-filter-value'),
+        service: document.getElementById('decided-booking-service-value'),
+        resultCount: document.getElementById('decided-booking-result-count'),
+        list: document.getElementById('decided-booking-list'),
+    },
+};
+const decidedBookingStatusFilters = document.getElementById('decided-booking-status-filters');
 const openHourSelect = document.getElementById('setting-open-hour');
 const closeHourSelect = document.getElementById('setting-close-hour');
 const daysOffCalendar = document.getElementById('days-off-calendar');
 const daysOffSummary = document.getElementById('days-off-summary');
 const calendarMonthLabel = document.getElementById('calendar-month');
 const settingsStatus = document.getElementById('settings-status');
+const selectedAvailabilityDateLabel = document.getElementById('selected-availability-date');
+const availabilityMode = document.getElementById('availability-mode');
+const dayOffToggle = document.getElementById('setting-day-off');
+const availabilitySlotList = document.getElementById('availability-slot-list');
+const availabilityEmpty = document.getElementById('availability-empty');
+const addAvailabilitySlotButton = document.getElementById('add-availability-slot');
+const useDefaultSlotsButton = document.getElementById('use-default-slots');
 
 let inquiries = [];
 let currentFilter = 'all';
 let lastSnapshot = '';
 let bookings = [];
 let lastBookingSnapshot = '';
-let currentBookingView = 'pending';
+let decidedBookingStatusFilter = 'all';
 let daysOff = new Set();
+let customSlotsByDate = {};
 let calendarMonth = currentManilaMonth();
+let selectedAvailabilityDate = '';
+let minimumAvailabilityDate = '';
+let maximumAvailabilityDate = '';
 
 // Builds an element and sets its text safely. Customer text is never inserted as HTML.
 function el(tag, className, text) {
@@ -125,6 +166,7 @@ function renderFilters() {
 }
 
 function dateInManila(value) {
+    if (!value) return '';
     const parts = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Manila',
         year: 'numeric',
@@ -139,7 +181,7 @@ function renderServiceOptions() {
     const selectedService = serviceValue.value;
     serviceValue.replaceChildren(el('option', '', 'All services'));
     serviceValue.firstElementChild.value = '';
-    [...new Set(inquiries.map((inquiry) => inquiry.service))]
+    [...new Set(inquiries.map((inquiry) => inquiry.service).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b))
         .forEach((service) => {
             const option = el('option', '', service);
@@ -163,25 +205,30 @@ function renderCard(inquiry) {
 
     const dl = el('dl', 'inquiry-details');
 
-    const phone = el('a', 'text-link', inquiry.phoneNumber);
-    phone.href = 'tel:' + inquiry.phoneNumber.replace(/[^0-9+]/g, '');
-    detailRow(dl, 'Phone', phone);
+    if (inquiry.phoneNumber) {
+        const phone = el('a', 'text-link', inquiry.phoneNumber);
+        phone.href = 'tel:' + inquiry.phoneNumber.replace(/[^0-9+]/g, '');
+        detailRow(dl, 'Phone', phone);
+    }
 
     const email = el('a', 'text-link', inquiry.email);
     email.href = 'mailto:' + inquiry.email;
     detailRow(dl, 'Email', email);
 
-    detailRow(dl, 'Service', inquiry.service);
-    detailRow(dl, 'Preferred date & time', formatDateTime(inquiry.preferredDateTime));
-
-    if (inquiry.nailDesignReference) {
-        const note = el('span', 'inquiry-note');
-        appendWithLinks(note, inquiry.nailDesignReference);
-        detailRow(dl, 'Nail design / reference', note);
-    } else {
-        detailRow(dl, 'Nail design / reference', 'None provided');
+    if (inquiry.service) detailRow(dl, 'Service', inquiry.service);
+    if (inquiry.preferredDateTime) {
+        detailRow(dl, 'Preferred date & time', formatDateTime(inquiry.preferredDateTime));
     }
-    detailRow(dl, 'Gel/product removal', inquiry.gelProductRemovalNeeded ? 'Yes' : 'No');
+
+    const message = inquiry.message || inquiry.nailDesignReference;
+    if (message) {
+        const note = el('span', 'inquiry-note');
+        appendWithLinks(note, message);
+        detailRow(dl, inquiry.message ? 'Message' : 'Nail design / reference', note);
+    }
+    if (inquiry.gelProductRemovalNeeded !== null && inquiry.gelProductRemovalNeeded !== undefined) {
+        detailRow(dl, 'Gel/product removal', inquiry.gelProductRemovalNeeded ? 'Yes' : 'No');
+    }
     card.appendChild(dl);
 
     const actions = el('div', 'status-actions');
@@ -239,7 +286,7 @@ function showSettingsStatus(message, type) {
     settingsStatus.className = 'form-status' + (type ? ' form-status-' + type : '');
 }
 
-function formatBookingWhen(value, includeYear = true) {
+function formatBookingWhen(value, includeYear = true, endValue = '') {
     const date = new Date(value);
     const dateOptions = {
         timeZone: 'Asia/Manila',
@@ -254,7 +301,15 @@ function formatBookingWhen(value, includeYear = true) {
         hour: 'numeric',
         minute: '2-digit',
     });
-    return `${day} at ${time}`;
+    if (!endValue) return `${day} at ${time}`;
+    const end = new Date(endValue);
+    const endDate = end.toLocaleDateString('en-US', dateOptions);
+    const endTime = end.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Manila',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+    return endDate === day ? `${day}, ${time}–${endTime}` : `${day}, ${time} – ${endDate}, ${endTime}`;
 }
 
 function renderBookingCard(booking) {
@@ -264,7 +319,7 @@ function renderBookingCard(booking) {
     const header = el('div', 'booking-admin-card-head');
     const nameBlock = el('div');
     nameBlock.appendChild(el('h2', 'booking-customer-name', name));
-    nameBlock.appendChild(el('p', 'booking-admin-time', formatBookingWhen(booking.startsAt)));
+    nameBlock.appendChild(el('p', 'booking-admin-time', formatBookingWhen(booking.startsAt, true, booking.endsAt)));
     header.appendChild(nameBlock);
     header.appendChild(el(
         'span',
@@ -303,32 +358,136 @@ function renderBookingCard(booking) {
     return card;
 }
 
-function renderBookings() {
-    bookingsList.replaceChildren();
-    const ordered = bookings
-        .filter((booking) => currentBookingView === 'pending'
+function bookingStatusesForView(view) {
+    return bookings
+        .filter((booking) => view === 'pending'
             ? booking.status === 'pending'
             : booking.status === 'accepted' || booking.status === 'declined')
-        .slice()
         .sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt));
-
-    if (ordered.length === 0) {
-        const message = currentBookingView === 'pending'
-            ? 'No pending booking requests.'
-            : 'No accepted or declined bookings yet.';
-        bookingsList.appendChild(el('p', 'empty-state', message));
-        return;
-    }
-    ordered.forEach((booking) => bookingsList.appendChild(renderBookingCard(booking)));
 }
 
-function selectBookingView(view) {
-    currentBookingView = view;
-    const showPending = view === 'pending';
-    pendingBookingsButton.setAttribute('aria-pressed', String(showPending));
-    decidedBookingsButton.setAttribute('aria-pressed', String(!showPending));
-    bookingViewHeading.textContent = showPending ? 'Pending bookings' : 'Accepted / declined bookings';
-    renderBookings();
+function renderDecidedBookingStatusFilters() {
+    const decidedBookings = bookingStatusesForView('decided');
+    const options = [
+        { value: 'all', label: 'All', count: decidedBookings.length },
+        { value: 'accepted', label: 'Accepted', count: decidedBookings.filter((booking) => booking.status === 'accepted').length },
+        { value: 'declined', label: 'Declined', count: decidedBookings.filter((booking) => booking.status === 'declined').length },
+    ];
+
+    decidedBookingStatusFilters.replaceChildren();
+    options.forEach((option) => {
+        const button = el('button', 'filter-chip', `${option.label} (${option.count})`);
+        button.type = 'button';
+        button.dataset.status = option.value;
+        button.setAttribute('aria-pressed', String(option.value === decidedBookingStatusFilter));
+        button.addEventListener('click', () => {
+            decidedBookingStatusFilter = option.value;
+            decidedBookingStatusFilters.querySelectorAll('.filter-chip').forEach((filter) => {
+                filter.setAttribute('aria-pressed', String(filter.dataset.status === decidedBookingStatusFilter));
+            });
+            renderBookingView('decided');
+        });
+        decidedBookingStatusFilters.appendChild(button);
+    });
+}
+
+function updateBookingServiceOptions(view, viewBookings) {
+    const serviceSelect = bookingSearch[view].service;
+    const selectedService = serviceSelect.value;
+    serviceSelect.replaceChildren(el('option', '', 'All services'));
+    serviceSelect.firstElementChild.value = '';
+    [...new Set(viewBookings.map((booking) => booking.service).filter(Boolean))]
+        .sort((first, second) => first.localeCompare(second))
+        .forEach((service) => {
+            const option = el('option', '', service);
+            option.value = service;
+            serviceSelect.appendChild(option);
+        });
+    serviceSelect.value = selectedService;
+}
+
+function bookingMatchesSearch(booking, controls) {
+    const searchType = controls.type.value;
+    if (searchType === 'service') {
+        const service = String(booking.service || '').toLocaleLowerCase();
+        const selectedService = controls.service.value.toLocaleLowerCase();
+        return !selectedService || service.includes(selectedService);
+    }
+
+    if (searchType === 'date') {
+        return !controls.value.value || dateInManila(booking.startsAt) === controls.value.value;
+    }
+
+    const customer = booking.User || {};
+    const fieldValue = searchType === 'email' ? customer.email : customer.name;
+    const query = controls.value.value.trim().toLocaleLowerCase();
+    return !query || String(fieldValue || '').toLocaleLowerCase().includes(query);
+}
+
+function renderBookingView(view) {
+    const controls = bookingSearch[view];
+    const baseBookings = bookingStatusesForView(view);
+    updateBookingServiceOptions(view, baseBookings);
+    const statusBookings = view === 'decided' && decidedBookingStatusFilter !== 'all'
+        ? baseBookings.filter((booking) => booking.status === decidedBookingStatusFilter)
+        : baseBookings;
+    const visible = statusBookings.filter((booking) => bookingMatchesSearch(booking, controls));
+
+    controls.list.replaceChildren();
+    controls.resultCount.textContent = `Showing ${visible.length} of ${statusBookings.length} bookings`;
+
+    if (visible.length === 0) {
+        let message = 'No bookings match the selected filters.';
+        if (baseBookings.length === 0) {
+            message = view === 'pending'
+                ? 'No pending booking requests.'
+                : 'No accepted or declined bookings yet.';
+        } else if (statusBookings.length === 0) {
+            message = `No ${decidedBookingStatusFilter} bookings yet.`;
+        }
+        controls.list.appendChild(el('p', 'empty-state', message));
+        return;
+    }
+
+    visible.forEach((booking) => controls.list.appendChild(renderBookingCard(booking)));
+}
+
+function renderBookings() {
+    renderDecidedBookingStatusFilters();
+    renderBookingView('pending');
+    renderBookingView('decided');
+}
+
+function updateBookingFilterInput(view) {
+    const controls = bookingSearch[view];
+    const field = controls.type.value;
+    const isService = field === 'service';
+    controls.value.hidden = isService;
+    controls.service.hidden = !isService;
+    controls.value.value = '';
+    controls.service.value = '';
+
+    if (field === 'date') {
+        controls.value.type = 'date';
+        controls.value.placeholder = '';
+        controls.value.setAttribute('aria-label', 'Appointment date');
+    } else {
+        controls.value.type = 'search';
+        controls.value.placeholder = field === 'email' ? 'Search by email' : 'Search by name';
+        controls.value.setAttribute('aria-label', `Search by ${field}`);
+    }
+    renderBookingView(view);
+}
+
+function clearBookingFilters(view) {
+    const controls = bookingSearch[view];
+    controls.value.value = '';
+    controls.service.value = '';
+    if (view === 'decided') {
+        decidedBookingStatusFilter = 'all';
+        renderDecidedBookingStatusFilters();
+    }
+    renderBookingView(view);
 }
 
 async function loadBookings(showDone) {
@@ -351,7 +510,7 @@ async function loadBookings(showDone) {
 async function changeBookingStatus(booking, status, actions) {
     const customerName = booking.User && booking.User.name ? booking.User.name : 'this customer';
     const verb = status === 'accepted' ? 'Accept' : 'Decline';
-    if (!window.confirm(`${verb} ${customerName}'s booking for ${formatBookingWhen(booking.startsAt, false)}?`)) {
+    if (!window.confirm(`${verb} ${customerName}'s booking for ${formatBookingWhen(booking.startsAt, false, booking.endsAt)}?`)) {
         return;
     }
 
@@ -368,9 +527,9 @@ async function changeBookingStatus(booking, status, actions) {
         showBookingStatus(`Booking ${status}.`, 'success');
     } catch (error) {
         if (error.status === 409 && status === 'accepted') {
-            showBookingStatus('You already accepted another booking for this time. Refresh the list and choose another.', 'error');
+            showBookingStatus('This appointment overlaps another accepted booking. Refresh the list and review it.', 'error');
             await loadBookings(false);
-            showBookingStatus('You already accepted another booking for this time. Refresh the list and choose another.', 'error');
+            showBookingStatus('This appointment overlaps another accepted booking. Refresh the list and review it.', 'error');
         } else {
             showBookingStatus(error.message, 'error');
             actions.querySelectorAll('button').forEach((button) => {
@@ -390,14 +549,120 @@ function currentManilaMonth() {
     return new Date(Date.UTC(Number(values.year), Number(values.month) - 1, 1));
 }
 
+function currentManilaDate() {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
+function addDateDays(dateKey, days) {
+    return new Date(Date.parse(`${dateKey}T00:00:00.000Z`) + days * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+}
+
 function dayOffKey(year, month, day) {
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function dateIsManageable(dateKey) {
+    return dateKey >= minimumAvailabilityDate && dateKey <= maximumAvailabilityDate;
 }
 
 function formattedDayOff(dateKey) {
     return new Date(`${dateKey}T12:00:00.000Z`).toLocaleDateString('en-PH', {
         timeZone: 'UTC',
         dateStyle: 'medium',
+    });
+}
+
+function defaultSlotsForDate() {
+    const slots = [];
+    for (let hour = Number(openHourSelect.value); hour < Number(closeHourSelect.value); hour += 1) {
+        slots.push({
+            startTime: `${String(hour).padStart(2, '0')}:00`,
+            endTime: `${String((hour + 1) % 24).padStart(2, '0')}:00`,
+        });
+    }
+    return slots;
+}
+
+function ensureCustomSlots(dateKey) {
+    if (!Object.prototype.hasOwnProperty.call(customSlotsByDate, dateKey)) {
+        customSlotsByDate[dateKey] = daysOff.has(dateKey) ? [] : defaultSlotsForDate();
+    }
+    return customSlotsByDate[dateKey];
+}
+
+function renderAvailabilitySlots() {
+    const dateKey = selectedAvailabilityDate;
+    if (!dateKey) return;
+
+    selectedAvailabilityDateLabel.textContent = formattedDayOff(dateKey);
+    dayOffToggle.checked = daysOff.has(dateKey);
+    const isCustom = Object.prototype.hasOwnProperty.call(customSlotsByDate, dateKey);
+    const slots = isCustom ? customSlotsByDate[dateKey] : defaultSlotsForDate();
+    const isClosed = daysOff.has(dateKey);
+    availabilityMode.textContent = isClosed
+        ? 'The salon is closed on this date.'
+        : isCustom
+            ? 'Custom appointment times for this date.'
+            : 'Using the default opening and closing hours.';
+    availabilitySlotList.replaceChildren();
+    availabilityEmpty.textContent = '';
+    addAvailabilitySlotButton.disabled = isClosed;
+    useDefaultSlotsButton.disabled = isClosed || !isCustom;
+
+    if (!isClosed && slots.length === 0) {
+        availabilityEmpty.textContent = 'No appointment times are set for this date.';
+    }
+
+    slots.forEach((slot, index) => {
+        const row = el('div', 'availability-slot-row');
+        const startLabel = el('label', '', 'Start');
+        const startInput = el('input');
+        startInput.type = 'time';
+        startInput.step = '60';
+        startInput.required = true;
+        startInput.value = slot.startTime || '';
+        startInput.setAttribute('aria-label', `Slot ${index + 1} start time`);
+        startLabel.appendChild(startInput);
+
+        const endLabel = el('label', '', 'End');
+        const endInput = el('input');
+        endInput.type = 'time';
+        endInput.step = '60';
+        endInput.required = true;
+        endInput.value = slot.endTime || '';
+        endInput.setAttribute('aria-label', `Slot ${index + 1} end time`);
+        endLabel.appendChild(endInput);
+
+        const removeButton = el('button', 'availability-remove-slot', 'Remove');
+        removeButton.type = 'button';
+        removeButton.disabled = isClosed;
+        removeButton.addEventListener('click', () => {
+            const editableSlots = ensureCustomSlots(dateKey);
+            editableSlots.splice(index, 1);
+            renderAvailabilitySlots();
+        });
+
+        [startInput, endInput].forEach((input) => {
+            input.disabled = isClosed;
+            input.addEventListener('change', () => {
+                const editableSlots = ensureCustomSlots(dateKey);
+                editableSlots[index][input === startInput ? 'startTime' : 'endTime'] = input.value;
+                availabilityMode.textContent = 'Custom appointment times for this date.';
+                useDefaultSlotsButton.disabled = false;
+            });
+        });
+
+        row.append(startLabel, endLabel, removeButton);
+        availabilitySlotList.appendChild(row);
     });
 }
 
@@ -421,26 +686,39 @@ function renderDaysOffCalendar() {
     }
     for (let day = 1; day <= daysInMonth; day += 1) {
         const dateKey = dayOffKey(year, month, day);
-        const selected = daysOff.has(dateKey);
-        const button = el('button', `calendar-day${selected ? ' is-day-off' : ''}`, String(day));
+        const dayOff = daysOff.has(dateKey);
+        const selected = dateKey === selectedAvailabilityDate;
+        const button = el(
+            'button',
+            `calendar-day${dayOff ? ' is-day-off' : ''}${selected ? ' is-selected' : ''}`,
+            String(day)
+        );
         button.type = 'button';
         button.dataset.date = dateKey;
-        button.setAttribute('aria-label', `${formattedDayOff(dateKey)}${selected ? ', day off' : ''}`);
+        button.disabled = !dateIsManageable(dateKey);
+        button.setAttribute('aria-label', `${formattedDayOff(dateKey)}${dayOff ? ', salon closed' : ''}`);
         button.setAttribute('aria-pressed', String(selected));
         button.addEventListener('click', () => {
-            if (daysOff.has(dateKey)) {
-                daysOff.delete(dateKey);
-            } else {
-                daysOff.add(dateKey);
-            }
+            selectedAvailabilityDate = dateKey;
             renderDaysOffCalendar();
+            renderAvailabilitySlots();
         });
         daysOffCalendar.appendChild(button);
     }
 
+    const firstMonth = new Date(Date.UTC(
+        new Date(`${minimumAvailabilityDate}T00:00:00.000Z`).getUTCFullYear(),
+        new Date(`${minimumAvailabilityDate}T00:00:00.000Z`).getUTCMonth(),
+        1
+    ));
+    const lastDate = new Date(`${maximumAvailabilityDate}T00:00:00.000Z`);
+    const lastMonth = new Date(Date.UTC(lastDate.getUTCFullYear(), lastDate.getUTCMonth(), 1));
+    document.getElementById('calendar-previous').disabled = calendarMonth <= firstMonth;
+    document.getElementById('calendar-next').disabled = calendarMonth >= lastMonth;
+
     const selectedDates = [...daysOff].sort();
     daysOffSummary.textContent = selectedDates.length
-        ? `Selected days off: ${selectedDates.map(formattedDayOff).join(', ')}`
+        ? `Closed dates: ${selectedDates.map(formattedDayOff).join(', ')}`
         : 'No days off selected.';
 }
 
@@ -469,8 +747,21 @@ async function loadSettings() {
         fillHourOptions(closeHourSelect, 1, 24);
         openHourSelect.value = String(data.settings.openHour);
         closeHourSelect.value = String(data.settings.closeHour);
-        daysOff = new Set(data.settings.daysOff);
+        minimumAvailabilityDate = currentManilaDate();
+        maximumAvailabilityDate = addDateDays(minimumAvailabilityDate, 60);
+        daysOff = new Set((data.settings.daysOff || [])
+            .filter((date) => date >= minimumAvailabilityDate && date <= maximumAvailabilityDate));
+        customSlotsByDate = Object.fromEntries(
+            Object.entries(data.settings.customSlotsByDate || {})
+                .filter(([date, slots]) => date >= minimumAvailabilityDate
+                    && date <= maximumAvailabilityDate
+                    && Array.isArray(slots))
+                .map(([date, slots]) => [date, slots.map((slot) => ({ ...slot }))])
+        );
+        selectedAvailabilityDate = minimumAvailabilityDate;
+        calendarMonth = currentManilaMonth();
         renderDaysOffCalendar();
+        renderAvailabilitySlots();
         showSettingsStatus('', '');
     } catch (error) {
         if (error.message !== 'Not logged in.') {
@@ -490,9 +781,13 @@ async function saveSettings() {
                 openHour: Number(openHourSelect.value),
                 closeHour: Number(closeHourSelect.value),
                 daysOff: [...daysOff].sort(),
+                customSlotsByDate,
             }),
         });
         daysOff = new Set(data.settings.daysOff);
+        customSlotsByDate = data.settings.customSlotsByDate;
+        renderDaysOffCalendar();
+        renderAvailabilitySlots();
         showSettingsStatus('Settings saved.', 'success');
     } catch (error) {
         showSettingsStatus(error.message, 'error');
@@ -511,6 +806,15 @@ function selectAdminTab(name) {
     inquiriesPanel.hidden = showBookings;
 }
 
+function selectBookingTab(name) {
+    bookingTabs.forEach((tab) => {
+        const selected = tab.name === name;
+        tab.button.setAttribute('aria-selected', String(selected));
+        tab.button.tabIndex = selected ? 0 : -1;
+        tab.panel.hidden = !selected;
+    });
+}
+
 bookingsTab.addEventListener('click', () => selectAdminTab('bookings'));
 inquiriesTab.addEventListener('click', () => selectAdminTab('inquiries'));
 document.querySelector('.admin-tabs').addEventListener('keydown', (event) => {
@@ -521,9 +825,29 @@ document.querySelector('.admin-tabs').addEventListener('keydown', (event) => {
         nextTab.focus();
     }
 });
+bookingTabs.forEach((tab) => {
+    tab.button.addEventListener('click', () => selectBookingTab(tab.name));
+});
+document.querySelector('.booking-view-switch').addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    const currentIndex = bookingTabs.findIndex((tab) => tab.button === event.target);
+    if (currentIndex === -1) return;
+    event.preventDefault();
+    const direction = event.key === 'ArrowRight' ? 1 : -1;
+    const nextTab = bookingTabs[(currentIndex + direction + bookingTabs.length) % bookingTabs.length];
+    selectBookingTab(nextTab.name);
+    nextTab.button.focus();
+});
 document.getElementById('bookings-refresh').addEventListener('click', () => loadBookings(true));
-pendingBookingsButton.addEventListener('click', () => selectBookingView('pending'));
-decidedBookingsButton.addEventListener('click', () => selectBookingView('decided'));
+Object.entries(bookingSearch).forEach(([view, controls]) => {
+    controls.type.addEventListener('change', () => updateBookingFilterInput(view));
+    controls.value.addEventListener('input', () => renderBookingView(view));
+    controls.service.addEventListener('change', () => renderBookingView(view));
+});
+document.getElementById('clear-pending-booking-filters')
+    .addEventListener('click', () => clearBookingFilters('pending'));
+document.getElementById('clear-decided-booking-filters')
+    .addEventListener('click', () => clearBookingFilters('decided'));
 document.getElementById('settings-save').addEventListener('click', saveSettings);
 document.getElementById('calendar-previous').addEventListener('click', () => {
     calendarMonth = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1));
@@ -533,6 +857,27 @@ document.getElementById('calendar-next').addEventListener('click', () => {
     calendarMonth = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1));
     renderDaysOffCalendar();
 });
+dayOffToggle.addEventListener('change', () => {
+    if (dayOffToggle.checked) {
+        daysOff.add(selectedAvailabilityDate);
+    } else {
+        daysOff.delete(selectedAvailabilityDate);
+    }
+    renderDaysOffCalendar();
+    renderAvailabilitySlots();
+});
+addAvailabilitySlotButton.addEventListener('click', () => {
+    ensureCustomSlots(selectedAvailabilityDate).push({ startTime: '', endTime: '' });
+    renderAvailabilitySlots();
+    availabilitySlotList.querySelector('.availability-slot-row:last-child input').focus();
+});
+useDefaultSlotsButton.addEventListener('click', () => {
+    delete customSlotsByDate[selectedAvailabilityDate];
+    renderAvailabilitySlots();
+});
+openHourSelect.addEventListener('change', renderAvailabilitySlots);
+closeHourSelect.addEventListener('change', renderAvailabilitySlots);
+selectBookingTab('availability');
 
 async function changeStatus(inquiry, status, actions) {
     if (inquiry.status === status) return;

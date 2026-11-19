@@ -34,6 +34,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: false,
       },
+      endsAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
       nailDesignReference: {
         type: DataTypes.STRING(1000),
         allowNull: true,

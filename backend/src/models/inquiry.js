@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  // Defines the fields Sequelize persists for a customer's appointment inquiry.
+  // Defines the fields Sequelize persists for a customer's inquiry.
   Inquiry.init(
     {
       name: {
@@ -27,17 +27,21 @@ module.exports = (sequelize, DataTypes) => {
           notEmpty: true,
         },
       },
+      message: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       phoneNumber: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       service: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       preferredDateTime: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
       },
       nailDesignReference: {
         type: DataTypes.TEXT,
@@ -45,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       gelProductRemovalNeeded: {
         type: DataTypes.BOOLEAN,
-        allowNull: false,
+        allowNull: true,
       },
     },
     {

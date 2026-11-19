@@ -7,6 +7,7 @@ const { body, header, validationResult } = require('express-validator');
 
 const db = require('../models');
 const { setAuthCookie, clearAuthCookie, requireAuth } = require('../../middleware/auth');
+const createBrandedEmail = require('../utils/branded-email');
 
 const router = express.Router();
 const PASSWORD_HASH_ROUNDS = 12;
@@ -338,12 +339,22 @@ router.post(
             const resetUrl = new URL('/login.html', frontendUrl);
             resetUrl.searchParams.set('token', token);
             resetUrl.searchParams.set('mode', 'reset');
+            const email = createBrandedEmail({
+                title: 'Reset your PinkieBabe Nails password',
+                previewText: 'Your password reset link is ready.',
+                paragraphs: [
+                    'Use this link within one hour to reset your password.',
+                    'If you did not request this, you can ignore this email.',
+                ],
+                actions: [{ label: 'Reset password', url: resetUrl.toString() }],
+                text: `Use this link within one hour to reset your password:\n\n${resetUrl.toString()}\n\nIf you did not request this, you can ignore this email.`,
+            });
             try {
                 await transporter.sendMail({
                     from: process.env.SMTP_USER,
                     to: user.email,
                     subject: 'Reset your PinkieBabe Nails password',
-                    text: `Use this link within one hour to reset your password:\n\n${resetUrl.toString()}\n\nIf you did not request this, you can ignore this email.`,
+                    ...email,
                 });
             } catch (mailError) {
                 await user.update({ resetPasswordTokenHash: null, resetPasswordExpiresAt: null });

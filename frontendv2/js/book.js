@@ -2,7 +2,16 @@ const bookPage = document.getElementById('book-page');
 const loadingMessage = document.getElementById('booking-loading');
 const loginPanel = document.getElementById('booking-login');
 const bookingContent = document.getElementById('booking-content');
+const appointmentTab = document.getElementById('book-appointment-tab');
+const myBookingsTab = document.getElementById('my-bookings-tab');
+const appointmentPanel = document.getElementById('book-appointment-panel');
+const myBookingsPanel = document.getElementById('my-bookings-panel');
 const dateInput = document.getElementById('booking-date');
+const calendarGrid = document.getElementById('booking-calendar');
+const calendarMonth = document.getElementById('calendar-month');
+const previousMonthButton = document.getElementById('calendar-previous');
+const nextMonthButton = document.getElementById('calendar-next');
+const selectedDateHeading = document.getElementById('selected-date-heading');
 const slotsList = document.getElementById('booking-slots');
 const availabilityStatus = document.getElementById('availability-status');
 const bookingForm = document.getElementById('booking-form');
@@ -13,9 +22,20 @@ const submitButton = document.getElementById('booking-submit');
 const bookingStatus = document.getElementById('booking-status');
 const customerBookingList = document.getElementById('customer-booking-list');
 const loginText = document.getElementById('booking-login-heading');
+const summaryDate = document.getElementById('summary-date');
+const summaryTime = document.getElementById('summary-time');
+const summaryService = document.getElementById('summary-service');
+const summaryRemoval = document.getElementById('summary-removal');
 
 let selectedTime = '';
 let slots = [];
+let currentMonth;
+let minimumDate = '';
+let maximumDate = '';
+let availabilityLoading = false;
+let availabilityError = '';
+let availabilityRequest = 0;
+const unavailableDates = new Set();
 
 function manilaDateKey(offset = 0) {
     const parts = new Intl.DateTimeFormat('en-CA', {
@@ -64,7 +84,15 @@ function formatTime(value) {
     });
 }
 
-function formatBookingDate(value) {
+function formatDateKey(value, options = {}) {
+    if (!value) return '';
+    return new Date(`${value}T00:00:00Z`).toLocaleDateString('en-US', {
+        timeZone: 'UTC',
+        ...options,
+    });
+}
+
+function formatBookingDate(value, endValue) {
     const date = new Date(value);
     const day = date.toLocaleDateString('en-US', {
         timeZone: 'Asia/Manila',
@@ -78,70 +106,209 @@ function formatBookingDate(value) {
         hour: 'numeric',
         minute: '2-digit',
     });
-    return `${day} at ${time}`;
+    if (!endValue) return `${day} at ${time}`;
+    const end = new Date(endValue);
+    const endDay = end.toLocaleDateString('en-US', {
+        timeZone: 'Asia/Manila',
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+    const endTime = end.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Manila',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+    return endDay === day ? `${day} at ${time}–${endTime}` : `${day} at ${time} – ${endDay} at ${endTime}`;
+}
+
+function monthStart(dateKey) {
+    const date = new Date(`${dateKey}T00:00:00Z`);
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+function dateKeyFor(date) {
+    return date.toISOString().slice(0, 10);
+}
+
+function updateSummary() {
+    const serviceOption = serviceInput.selectedOptions[0];
+    const removalOption = removalInput.selectedOptions[0];
+    const selectedSlot = slots.find((slot) => slot.time === selectedTime);
+    summaryDate.textContent = dateInput.value
+        ? formatDateKey(dateInput.value, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+        : 'Choose a date';
+    summaryTime.textContent = selectedSlot
+        ? `${formatTime(selectedSlot.time)} – ${formatTime(selectedSlot.endTime)}${selectedSlot.endsNextDay ? ' (next day)' : ''}`
+        : 'Choose a time';
+    summaryService.textContent = serviceInput.value ? serviceOption.textContent : 'Choose a service';
+    summaryRemoval.textContent = removalInput.value ? removalOption.textContent : 'Choose Yes or No';
 }
 
 function updateSubmitState() {
-    submitButton.disabled = !selectedTime
+    const hasAvailableSelection = selectedTime
+        && slots.some((slot) => slot.time === selectedTime && slot.available);
+    submitButton.disabled = availabilityLoading
+        || !dateInput.value
+        || !hasAvailableSelection
         || !serviceInput.value
-        || !removalInput.value
-        || !dateInput.value;
+        || !removalInput.value;
+    updateSummary();
+}
+
+function renderCalendar() {
+    if (!currentMonth) return;
+
+    calendarMonth.textContent = currentMonth.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
+        month: 'long',
+        year: 'numeric',
+    });
+    calendarGrid.replaceChildren();
+
+    const year = currentMonth.getUTCFullYear();
+    const month = currentMonth.getUTCMonth();
+    const firstWeekday = currentMonth.getUTCDay();
+    const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+    for (let blank = 0; blank < firstWeekday; blank += 1) {
+        const emptyCell = document.createElement('span');
+        emptyCell.className = 'booking-calendar-empty';
+        emptyCell.setAttribute('aria-hidden', 'true');
+        calendarGrid.appendChild(emptyCell);
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+        const date = new Date(Date.UTC(year, month, day));
+        const dateKey = dateKeyFor(date);
+        const button = document.createElement('button');
+        const outsideBookingWindow = dateKey < minimumDate || dateKey > maximumDate;
+        const knownUnavailable = unavailableDates.has(dateKey);
+
+        button.type = 'button';
+        button.className = 'booking-calendar-day';
+        button.textContent = String(day);
+        button.setAttribute('aria-label', formatDateKey(dateKey, {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+        }));
+        button.setAttribute('aria-pressed', String(dateKey === dateInput.value));
+        button.disabled = outsideBookingWindow || knownUnavailable;
+        if (outsideBookingWindow || knownUnavailable) button.classList.add('is-unavailable');
+        if (dateKey === dateInput.value) button.classList.add('is-selected');
+        button.addEventListener('click', () => selectDate(dateKey));
+        calendarGrid.appendChild(button);
+    }
+
+    const firstMonth = monthStart(minimumDate);
+    const lastMonth = monthStart(maximumDate);
+    previousMonthButton.disabled = currentMonth.getTime() <= firstMonth.getTime();
+    nextMonthButton.disabled = currentMonth.getTime() >= lastMonth.getTime();
 }
 
 function renderSlots() {
     const focusedTime = document.activeElement && document.activeElement.dataset.time;
     slotsList.replaceChildren();
 
-    slots.forEach((slot) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'booking-slot';
-        button.textContent = formatTime(slot.time);
-        button.disabled = !slot.available;
-        button.dataset.time = slot.time;
-        button.setAttribute('aria-pressed', String(slot.time === selectedTime));
-        if (slot.time === selectedTime) button.classList.add('is-selected');
-        button.addEventListener('click', () => {
-            selectedTime = slot.time;
-            renderSlots();
-            updateSubmitState();
-            const selectedButton = [...slotsList.querySelectorAll('button')]
-                .find((item) => item.dataset.time === selectedTime);
-            if (selectedButton) selectedButton.focus();
+    if (availabilityLoading) {
+        showStatus(availabilityStatus, 'Loading available times…', '');
+    } else if (availabilityError) {
+        showStatus(availabilityStatus, availabilityError, 'error');
+    } else if (!slots.some((slot) => slot.available)) {
+        showStatus(availabilityStatus, 'No available times for this date. Please choose another date.', '');
+    } else {
+        showStatus(availabilityStatus, '', '');
+        slots.forEach((slot) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'booking-slot';
+            button.textContent = `${formatTime(slot.time)} – ${formatTime(slot.endTime)}${slot.endsNextDay ? ' (+1 day)' : ''}`;
+            button.disabled = !slot.available;
+            button.dataset.time = slot.time;
+            button.setAttribute('aria-pressed', String(slot.time === selectedTime));
+            if (slot.time === selectedTime) button.classList.add('is-selected');
+            button.addEventListener('click', () => {
+                selectedTime = slot.time;
+                renderSlots();
+                updateSubmitState();
+                const selectedButton = [...slotsList.querySelectorAll('button')]
+                    .find((item) => item.dataset.time === selectedTime);
+                if (selectedButton) selectedButton.focus();
+            });
+            slotsList.appendChild(button);
         });
-        slotsList.appendChild(button);
-    });
+    }
 
     if (focusedTime) {
         const replacement = [...slotsList.querySelectorAll('button')]
             .find((button) => button.dataset.time === focusedTime && !button.disabled);
         if (replacement) replacement.focus();
     }
-
-    if (slots.length > 0 && !slots.some((slot) => slot.available)) {
-        showStatus(availabilityStatus, 'No available times for this date. Please choose another date.', '');
-    } else {
-        showStatus(availabilityStatus, '', '');
-    }
     updateSubmitState();
 }
 
 async function loadAvailability() {
     if (!dateInput.value) return;
+
+    const requestedDate = dateInput.value;
+    const requestId = ++availabilityRequest;
+    availabilityLoading = true;
+    availabilityError = '';
+    renderSlots();
+
     try {
-        const data = await api(`/api/bookings/availability?date=${encodeURIComponent(dateInput.value)}`);
-        const wasSelected = selectedTime;
+        const data = await api(`/api/bookings/availability?date=${encodeURIComponent(requestedDate)}`);
+        if (requestId !== availabilityRequest || dateInput.value !== requestedDate) return;
+
         slots = data.slots;
+        if (slots.some((slot) => slot.available)) {
+            unavailableDates.delete(requestedDate);
+        } else {
+            unavailableDates.add(requestedDate);
+        }
         if (selectedTime && !slots.some((slot) => slot.time === selectedTime && slot.available)) {
             selectedTime = '';
-            if (wasSelected) {
-                showStatus(bookingStatus, 'That time is no longer available. Please choose another time.', 'error');
-            }
+            showStatus(bookingStatus, 'That time is no longer available. Please choose another time.', 'error');
         }
+        availabilityLoading = false;
+        renderCalendar();
         renderSlots();
     } catch (error) {
-        showStatus(availabilityStatus, `Could not load available times. ${error.message}`, 'error');
+        if (requestId !== availabilityRequest || dateInput.value !== requestedDate) return;
+        slots = [];
+        availabilityLoading = false;
+        availabilityError = `Could not load available times. ${error.message}`;
+        renderSlots();
     }
+}
+
+function selectDate(dateKey) {
+    if (dateKey < minimumDate || dateKey > maximumDate || unavailableDates.has(dateKey)) return;
+    dateInput.value = dateKey;
+    selectedTime = '';
+    slots = [];
+    showStatus(bookingStatus, '', '');
+    selectedDateHeading.textContent = formatDateKey(dateKey, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    });
+    renderCalendar();
+    updateSummary();
+    loadAvailability();
+}
+
+function changeMonth(offset) {
+    currentMonth = new Date(Date.UTC(
+        currentMonth.getUTCFullYear(),
+        currentMonth.getUTCMonth() + offset,
+        1
+    ));
+    renderCalendar();
 }
 
 async function loadCustomerBookings() {
@@ -163,7 +330,7 @@ async function loadCustomerBookings() {
             heading.textContent = booking.service;
             card.appendChild(heading);
             const when = document.createElement('p');
-            when.textContent = formatBookingDate(booking.startsAt);
+            when.textContent = formatBookingDate(booking.startsAt, booking.endsAt);
             card.appendChild(when);
             const status = document.createElement('span');
             status.className = `customer-booking-status customer-status-${booking.status}`;
@@ -176,20 +343,35 @@ async function loadCustomerBookings() {
     }
 }
 
-dateInput.addEventListener('change', () => {
-    selectedTime = '';
-    showStatus(bookingStatus, '', '');
-    slots = [];
-    renderSlots();
-    loadAvailability();
-});
+function selectBookingTab(name) {
+    const showAppointment = name === 'appointment';
+    appointmentTab.setAttribute('aria-selected', String(showAppointment));
+    appointmentTab.tabIndex = showAppointment ? 0 : -1;
+    appointmentPanel.hidden = !showAppointment;
+    myBookingsTab.setAttribute('aria-selected', String(!showAppointment));
+    myBookingsTab.tabIndex = showAppointment ? -1 : 0;
+    myBookingsPanel.hidden = showAppointment;
+}
 
+appointmentTab.addEventListener('click', () => selectBookingTab('appointment'));
+myBookingsTab.addEventListener('click', () => selectBookingTab('bookings'));
+document.querySelector('.booking-tabs').addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    event.preventDefault();
+    const nextTab = event.target === appointmentTab ? myBookingsTab : appointmentTab;
+    selectBookingTab(nextTab === appointmentTab ? 'appointment' : 'bookings');
+    nextTab.focus();
+});
+selectBookingTab('appointment');
+
+previousMonthButton.addEventListener('click', () => changeMonth(-1));
+nextMonthButton.addEventListener('click', () => changeMonth(1));
 serviceInput.addEventListener('change', updateSubmitState);
 removalInput.addEventListener('change', updateSubmitState);
 
 bookingForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!selectedTime) return;
+    if (!selectedTime || !slots.some((slot) => slot.time === selectedTime && slot.available)) return;
 
     submitButton.disabled = true;
     showStatus(bookingStatus, '', '');
@@ -240,9 +422,18 @@ async function start() {
                 loginPanel.hidden = false;
             } else {
                 bookingContent.hidden = false;
-                dateInput.min = manilaDateKey();
-                dateInput.max = manilaDateKey(60);
-                dateInput.value = dateInput.min;
+                minimumDate = manilaDateKey();
+                maximumDate = manilaDateKey(60);
+                dateInput.value = minimumDate;
+                currentMonth = monthStart(minimumDate);
+                selectedDateHeading.textContent = formatDateKey(minimumDate, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                });
+                renderCalendar();
+                updateSummary();
                 await Promise.all([loadAvailability(), loadCustomerBookings()]);
                 window.setInterval(loadAvailability, 30_000);
                 window.addEventListener('focus', loadAvailability);
