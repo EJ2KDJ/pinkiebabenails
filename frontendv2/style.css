@@ -1366,7 +1366,6 @@ fieldset.form-field {
 @media (max-width: 640px) {
   /* Compact navigation and stack form fields on small screens. */
   .site-header {
-    justify-content: space-between;
     gap: 0.65rem;
   }
 
