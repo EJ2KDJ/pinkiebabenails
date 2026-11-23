@@ -3527,7 +3527,7 @@ h3 {
     font-weight: 700;
 }
 
-.booking-view-button[aria-pressed="true"] {
+.booking-view-button[aria-selected="true"] {
     background: var(--cherry);
     color: #fff;
 }
@@ -3619,7 +3619,7 @@ select option {
     color: #64142f;
 }
 
-.booking-view-button[aria-pressed="true"] {
+.booking-view-button[aria-selected="true"] {
     border-color: var(--cherry);
     background: var(--cherry);
     color: #fff;
