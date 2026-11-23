@@ -4614,6 +4614,15 @@ body.booking-page {
     color: var(--admin-text);
 }
 
+.admin-page .booking-admin-card .text-link {
+    color: var(--admin-deep);
+    text-decoration-color: currentColor;
+}
+
+.admin-page .booking-admin-card .text-link:hover {
+    color: var(--admin-cherry);
+}
+
 .admin-page .inquiry-received {
     color: var(--admin-text);
 }
